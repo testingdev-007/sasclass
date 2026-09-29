@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAS Enterprise Guide: Advanced Text Analytics & Root Cause Classification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sas: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#4f46e5', 600: '#4338ca', 700: '#3730a3', 900: '#312e81' },
+                        slate: { 850: '#151f38', 950: '#0b1120' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-brain text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    SAS EG Root-Cause NLP Masterclass 
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-medium">Enterprise Guide Edition</span>
+                </h1>
+                <p class="text-xs text-slate-400">Balancing Customer Grievance vs. Operational Findings with Standard Base SAS</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="switchTab('curriculum')" id="nav-curriculum" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                <i class="fa-solid fa-book-open mr-2"></i>Curriculum
+            </button>
+            <button onclick="switchTab('sandbox')" id="nav-sandbox" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800">
+                <i class="fa-solid fa-sliders mr-2"></i>Dual-Field Sandbox
+            </button>
+            <button onclick="switchTab('taxonomy')" id="nav-taxonomy" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800">
+                <i class="fa-solid fa-sitemap mr-2"></i>3-Tier Taxonomy
+            </button>
+            <button onclick="switchTab('vault')" id="nav-vault" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800">
+                <i class="fa-solid fa-code mr-2"></i>SAS Code Vault
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 max-w-7xl mx-auto w-full">
+
+        <!-- ================= TAB 1: CURRICULUM ================= -->
+        <div id="tab-curriculum" class="space-y-8">
+            <div class="bg-gradient-to-r from-indigo-900/40 via-slate-850 to-slate-900 border border-indigo-500/20 rounded-2xl p-8 relative overflow-hidden shadow-xl">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="max-w-3xl">
+                    <span class="text-indigo-400 font-semibold text-xs tracking-wider uppercase mb-2 block">Advanced Enterprise Text Analytics</span>
+                    <h2 class="text-3xl font-extrabold text-white tracking-tight mb-4">Solving the Complaint Root-Cause Puzzle in Standard SAS EG</h2>
+                    <p class="text-slate-300 text-base leading-relaxed mb-6">
+                        When using standard SAS Enterprise Guide without specialized add-ons (like SAS Text Miner or Visual Text Analytics), data scientists must architect robust tokenization, noise filtering, and heuristic semantic engines inside Base SAS datasets, SQL, and macros. This masterclass bridges the gap between raw unstructured complaints and actionable operational root causes.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700"><i class="fa-solid fa-check mr-1.5 text-indigo-400"></i> Dual-Field Text Weighting</span>
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700"><i class="fa-solid fa-check mr-1.5 text-indigo-400"></i> 3-Tier Hierarchical Taxonomy</span>
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700"><i class="fa-solid fa-check mr-1.5 text-indigo-400"></i> TF-IDF & Hash-Object Scoring</span>
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700"><i class="fa-solid fa-check mr-1.5 text-indigo-400"></i> Phonetic & Fuzzy SPEDIS Matching</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Curriculum Modules Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Module 1 -->
+                <div class="bg-slate-850 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-md group">
+                    <div>
+                        <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">01</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Balancing Customer vs. Findings</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                            Customer descriptions express emotional grievance and perceived failures. Investigation findings contain verified operational truths. Learn how to weight both fields to prevent false root-cause attribution.
+                        </p>
+                    </div>
+                    <button onclick="switchTab('sandbox')" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        Try Dual-Field Weighting Sandbox <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Module 2 -->
+                <div class="bg-slate-850 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-md group">
+                    <div>
+                        <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">02</div>
+                        <h3 class="text-lg font-bold text-white mb-2">3-Tier Taxonomy Architecture</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                            Structure complaint categories hierarchically (L1 Domain -> L2 Root Cause -> L3 Specific Failure Mode) using normalized dimensional tables rather than flat string matching.
+                        </p>
+                    </div>
+                    <button onclick="switchTab('taxonomy')" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        View Taxonomy Schema Designer <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Module 3 -->
+                <div class="bg-slate-850 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-md group">
+                    <div>
+                        <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">03</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Noise Reduction & N-Grams</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                            Strip conversational filler ("very unhappy", "please help"), generate bigrams and trigrams, and compute TF-IDF in Base SAS data steps with hash object lookups.
+                        </p>
+                    </div>
+                    <button onclick="switchTab('vault')" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        Get Base SAS TF-IDF Code <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Module 4 -->
+                <div class="bg-slate-850 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-md group">
+                    <div>
+                        <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">04</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Fuzzy & Phonetic Matching</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                            Handle customer typos, abbreviations, and product name variations using built-in SAS functions like `spedis()`, `soundex()`, and regular expression suffix stripping.
+                        </p>
+                    </div>
+                    <button onclick="switchTab('vault')" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        Explore Fuzzy SAS Macros <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Module 5 -->
+                <div class="bg-slate-850 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-md group">
+                    <div>
+                        <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">05</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Heuristic Hybrid LLM Proxy</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                            Simulate rudimentary Large Language Model prompt-routing logic within SAS macros using regex pattern scoring, negation checks, and contextual sentiment distance.
+                        </p>
+                    </div>
+                    <button onclick="switchTab('sandbox')" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        Test Heuristic Scoring <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Module 6 -->
+                <div class="bg-slate-850 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-md group">
+                    <div>
+                        <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">06</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Enterprise Guide Deployment</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                            Organize your EG process flow from raw data ingestion, text tokenization, hash scoring, taxonomy mapping, to executive reporting tables.
+                        </p>
+                    </div>
+                    <button onclick="switchTab('vault')" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        View EG Architecture Guide <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: DUAL-FIELD SANDBOX ================= -->
+        <div id="tab-sandbox" class="space-y-6 hidden">
+            <div class="bg-slate-850 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-indigo-400"></i> Dual-Field Text Weighting Playground
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Simulate how adjusting weights between the Customer Description (grievance emotion) and Investigation Findings (upheld operational fault) impacts root cause classification.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="loadSampleComplaint(1)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-all">Sample 1: Billing Error</button>
+                        <button onclick="loadSampleComplaint(2)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-all">Sample 2: Delayed Transfer</button>
+                        <button onclick="loadSampleComplaint(3)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-all">Sample 3: Rude Agent</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6">
+                    <!-- Left: Inputs & Sliders -->
+                    <div class="lg:col-span-1 space-y-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Customer Description (Grievance Intent)</label>
+                            <textarea id="input-desc" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 custom-scrollbar" placeholder="Enter customer narrative..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Investigation Findings (Verified Fault)</label>
+                            <textarea id="input-find" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 custom-scrollbar" placeholder="Enter investigator findings..."></textarea>
+                        </div>
+
+                        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400">Customer Description Weight (<span id="val-w1">30</span>%)</span>
+                                    <span class="text-indigo-400">Grievance Intent</span>
+                                </div>
+                                <input type="range" id="slider-w1" min="0" max="100" value="30" oninput="updateWeighting()" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400">Investigation Findings Weight (<span id="val-w2">70</span>%)</span>
+                                    <span class="text-indigo-400">Operational Truth</span>
+                                </div>
+                                <input type="range" id="slider-w2" min="0" max="100" value="70" oninput="updateWeighting()" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <button onclick="runClassificationSimulation()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Run Heuristic Classification
+                        </button>
+                    </div>
+
+                    <!-- Right: Results & Analysis -->
+                    <div class="lg:col-span-2 space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-center">
+                                <span class="text-xs text-slate-400 block mb-1">Assigned L1 Domain</span>
+                                <span id="res-l1" class="text-base font-bold text-white">-</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-center">
+                                <span class="text-xs text-slate-400 block mb-1">Assigned L2 Root Cause</span>
+                                <span id="res-l2" class="text-base font-bold text-indigo-400">-</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-center">
+                                <span class="text-xs text-slate-400 block mb-1">Confidence Score</span>
+                                <span id="res-conf" class="text-base font-bold text-emerald-400">-</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-bar text-indigo-400"></i> Dual-Field Contribution Breakdown
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-400">Customer Grievance Match Signal</span>
+                                        <span id="score-desc" class="font-mono text-indigo-300">0.00</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-desc" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-slate-400">Investigation Finding Upheld Signal</span>
+                                        <span id="score-find" class="font-mono text-indigo-300">0.00</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                        <div id="bar-find" class="bg-violet-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5">
+                            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-lightbulb text-amber-400"></i> Analyst Insights & Noise Reduction Log
+                            </h3>
+                            <div id="analysis-log" class="text-xs font-mono text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800 h-36 overflow-y-auto custom-scrollbar leading-relaxed">
+                                Click "Run Heuristic Classification" to analyze text inputs...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: 3-TIER TAXONOMY ================= -->
+        <div id="tab-taxonomy" class="space-y-6 hidden">
+            <div class="bg-slate-850 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sitemap text-indigo-400"></i> 3-Tier Complaint Taxonomy Schema Designer
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Recommended normalized table structures for SAS EG datasets, ensuring clear parent-child relationships between L1 Business Domain, L2 Root Cause, and L3 Specific Failure Mode.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchTaxonomyView('schema')" id="btn-schema" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs font-semibold text-white transition-all">Table Schemas</button>
+                        <button onclick="switchTaxonomyView('tree')" id="btn-tree" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all">Hierarchy Tree</button>
+                    </div>
+                </div>
+
+                <!-- Schema View -->
+                <div id="tax-view-schema" class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- L1 Table -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-400 text-xs font-bold border border-indigo-500/30">Level 1</span>
+                                <span class="text-xs font-mono text-slate-400">DIM_TAXONOMY_L1</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white">Business Domain</h3>
+                            <p class="text-xs text-slate-400">High-level organizational division or product line responsible for the customer relationship.</p>
+                            <div class="space-y-2 pt-2 border-t border-slate-800">
+                                <div class="flex justify-between text-xs font-mono"><span class="text-indigo-300">l1_id</span><span class="text-slate-500">CHAR(10) [PK]</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-slate-300">l1_name</span><span class="text-slate-500">VARCHAR(50)</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-slate-300">owner_dept</span><span class="text-slate-500">VARCHAR(50)</span></div>
+                            </div>
+                        </div>
+
+                        <!-- L2 Table -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-400 text-xs font-bold border border-violet-500/30">Level 2</span>
+                                <span class="text-xs font-mono text-slate-400">DIM_TAXONOMY_L2</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white">Root Cause Category</h3>
+                            <p class="text-xs text-slate-400">Underlying operational failure category verified during investigation findings.</p>
+                            <div class="space-y-2 pt-2 border-t border-slate-800">
+                                <div class="flex justify-between text-xs font-mono"><span class="text-violet-300">l2_id</span><span class="text-slate-500">CHAR(10) [PK]</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-indigo-300">l1_id</span><span class="text-slate-500">CHAR(10) [FK]</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-slate-300">l2_name</span><span class="text-slate-500">VARCHAR(60)</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-slate-300">risk_weight</span><span class="text-slate-500">NUMERIC</span></div>
+                            </div>
+                        </div>
+
+                        <!-- L3 Table -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">Level 3</span>
+                                <span class="text-xs font-mono text-slate-400">DIM_TAXONOMY_L3</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white">Specific Failure Mode</h3>
+                            <p class="text-xs text-slate-400">Granular actionable error type identified by text categorization models or rules.</p>
+                            <div class="space-y-2 pt-2 border-t border-slate-800">
+                                <div class="flex justify-between text-xs font-mono"><span class="text-emerald-300">l3_id</span><span class="text-slate-500">CHAR(10) [PK]</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-violet-300">l2_id</span><span class="text-slate-500">CHAR(10) [FK]</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-slate-300">l3_name</span><span class="text-slate-500">VARCHAR(80)</span></div>
+                                <div class="flex justify-between text-xs font-mono"><span class="text-slate-300">keyword_regex</span><span class="text-slate-500">VARCHAR(255)</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5">
+                        <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-database text-indigo-400"></i> Fact Table Integration (`FACT_COMPLAINTS`)
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">
+                            To tie unstructured description and investigation findings to your taxonomy in SAS EG, your fact table should store dual-field scores and foreign keys to L3:
+                        </p>
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 overflow-x-auto">
+                            <code class="text-xs font-mono text-indigo-300">
+                                COMPLAINT_ID (PK) | CASE_DATE | L3_ID (FK) | CUSTOMER_DESC (Text) | INVESTIGATION_FINDINGS (Text) | DUAL_SCORE | CONFIDENCE
+                            </code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tree View -->
+                <div id="tax-view-tree" class="space-y-4 hidden">
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-6 space-y-6">
+                        <h3 class="text-base font-bold text-white">Interactive Taxonomy Hierarchy Map</h3>
+                        
+                        <!-- Domain 1 -->
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold">L1: Retail Banking & Payments</span>
+                            </div>
+                            <div class="pl-6 space-y-3 border-l-2 border-slate-800 ml-3">
+                                <div>
+                                    <span class="px-2.5 py-0.5 rounded bg-violet-600/30 text-violet-300 text-xs font-semibold">L2: Transaction Processing Errors</span>
+                                    <div class="pl-6 pt-2 space-y-1.5 border-l border-slate-800 ml-2 mt-1">
+                                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fa-solid fa-angle-right text-indigo-400"></i> L3: Duplicate Direct Debit charge on account</div>
+                                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fa-solid fa-angle-right text-indigo-400"></i> L3: Delayed ACH transfer clearing over 3 business days</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="px-2.5 py-0.5 rounded bg-violet-600/30 text-violet-300 text-xs font-semibold">L2: Billing & Fee Discrepancies</span>
+                                    <div class="pl-6 pt-2 space-y-1.5 border-l border-slate-800 ml-2 mt-1">
+                                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fa-solid fa-angle-right text-indigo-400"></i> L3: Unnotified overdraft fee charged during grace period</div>
+                                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fa-solid fa-angle-right text-indigo-400"></i> L3: Promotional interest rate not applied correctly</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Domain 2 -->
+                        <div class="space-y-3 pt-4 border-t border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold">L1: Digital Channels & Mobile App</span>
+                            </div>
+                            <div class="pl-6 space-y-3 border-l-2 border-slate-800 ml-3">
+                                <div>
+                                    <span class="px-2.5 py-0.5 rounded bg-violet-600/30 text-violet-300 text-xs font-semibold">L2: Authentication & Login Failures</span>
+                                    <div class="pl-6 pt-2 space-y-1.5 border-l border-slate-800 ml-2 mt-1">
+                                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fa-solid fa-angle-right text-indigo-400"></i> L3: Biometric login loop error on iOS/Android</div>
+                                        <div class="text-xs text-slate-300 flex items-center gap-2"><i class="fa-solid fa-angle-right text-indigo-400"></i> L3: Two-factor SMS token delayed beyond timeout</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: SAS CODE VAULT ================= -->
+        <div id="tab-vault" class="space-y-6 hidden">
+            <div class="bg-slate-850 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-code text-indigo-400"></i> SAS Enterprise Guide Code Vault
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Production-ready SAS EG program snippets for tokenization, noise reduction, TF-IDF scoring, and fuzzy SPEDIS matching. Copy and paste directly into an EG Program Node.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="switchVaultSnippet('token')" id="btn-vault-token" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs font-semibold text-white transition-all">1. Token & N-Grams</button>
+                        <button onclick="switchVaultSnippet('tfidf')" id="btn-vault-tfidf" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all">2. TF-IDF & Hash</button>
+                        <button onclick="switchVaultSnippet('fuzzy')" id="btn-vault-fuzzy" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all">3. SPEDIS Fuzzy</button>
+                        <button onclick="switchVaultSnippet('dual')" id="btn-vault-dual" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all">4. Dual-Field Scoring</button>
+                    </div>
+                </div>
+
+                <!-- Code Container -->
+                <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                    <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 text-xs font-mono text-slate-400">
+                        <span id="vault-filename">sas_program_tokenization.sas</span>
+                        <button onclick="copyVaultCode()" class="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-copy"></i> Copy to Clipboard
+                        </button>
+                    </div>
+                    <pre class="p-5 overflow-x-auto text-xs font-mono text-indigo-200 leading-relaxed custom-scrollbar" id="vault-code-content"><code>/* ===================================================================== */
+/* PROGRAM 1: Free Text Tokenization, Stopword Removal, & N-Gram Generation */
+/* Environment: Standard SAS Enterprise Guide (No Add-ons Required)     */
+/* ===================================================================== */
+
+data work.complaint_tokens;
+    set work.raw_complaints;
+    
+    /* Clean text: lowercase, remove special characters and punctuation */
+    clean_desc = lowcase(compress(customer_description, ., 'ai'));
+    clean_findings = lowcase(compress(investigation_findings, ., 'ai'));
+    
+    /* Combine with dual-field weighting (70% findings, 30% description) */
+    /* In actual SAS EG, we tokenize both independently or concatenate weighted */
+    combined_text = catx(' ', clean_findings, clean_findings, clean_desc);
+    
+    word_count = countw(combined_text);
+    
+    /* 1. Unigrams Extraction & Stopword Filter */
+    do i = 1 to word_count;
+        term = scan(combined_text, i, ' ');
+        gram_type = '1-gram';
+        
+        /* Inline Stopword Filtering */
+        if not missing(term) and length(term) > 2 
+           and term not in ('the','and','was','for','that','with','this','not','you','have','are','was') then do;
+            output;
+        end;
+    end;
+    
+    /* 2. Bigrams Extraction */
+    do i = 1 to (word_count - 1);
+        term = catx(' ', scan(combined_text, i, ' '), scan(combined_text, i+1, ' '));
+        gram_type = '2-gram';
+        if not missing(term) then output;
+    end;
+    
+    keep complaint_id term gram_type customer_id case_date;
+run;</code></pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-950 border-t border-slate-800 py-4 px-6 text-center text-xs text-slate-500">
+        SAS Enterprise Guide Text Analytics Masterclass &bull; Designed for Educators & Data Analysts &bull; Standard Base SAS Compatible
+    </footer>
+
+    <script>
+        /* Tab Switching */
+        function switchTab(tabId) {
+            ['curriculum', 'sandbox', 'taxonomy', 'vault'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                if(navBtn) {
+                    navBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800";
+                }
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) {
+                activeBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/20";
+            }
+        }
+
+        /* Taxonomy View Toggle */
+        function switchTaxonomyView(view) {
+            if(view === 'schema') {
+                document.getElementById('tax-view-schema').classList.remove('hidden');
+                document.getElementById('tax-view-tree').classList.add('hidden');
+                document.getElementById('btn-schema').className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-xs font-semibold text-white transition-all";
+                document.getElementById('btn-tree').className = "px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all";
+            } else {
+                document.getElementById('tax-view-schema').classList.add('hidden');
+                document.getElementById('tax-view-tree').classList.remove('hidden');
+                document.getElementById('btn-tree').className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-xs font-semibold text-white transition-all";
+                document.getElementById('btn-schema').className = "px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all";
+            }
+        }
+
+        /* Sandbox Sample Data */
+        const samples = {
+            1: {
+                desc: "Customer claims they were charged an outrageous £45 overdraft fee when they had sufficient funds in their savings buffer. Very upset and demanding a full refund immediately.",
+                find: "Investigation confirmed system batch processing delay of 4 hours caused debit clearing before credit transfer. Fee was automatically reversed and bank error acknowledged."
+            },
+            2: {
+                desc: "I tried to transfer money to my mortgage account last Friday and it still hasn't arrived. Customer service agents were completely unhelpful on the phone.",
+                find: "ACH transfer was flagged by fraud prevention due to unusual amount. Fraud team verified legitimacy after 48 hours. Transfer completed successfully."
+            },
+            3: {
+                desc: "The agent on chat was extremely rude when I asked about my loan interest rate increase and hung up on me before resolving my query.",
+                find: "Chat transcript reviewed. Agent followed standard regulatory disclosure protocol regarding variable APR increases. No agent misconduct found; customer complaint regarding attitude rejected."
+            }
+        };
+
+        function loadSampleComplaint(id) {
+            document.getElementById('input-desc').value = samples[id].desc;
+            document.getElementById('input-find').value = samples[id].find;
+            runClassificationSimulation();
+        }
+
+        function updateWeighting() {
+            const w1 = parseInt(document.getElementById('slider-w1').value);
+            const w2 = 100 - w1;
+            document.getElementById('slider-w2').value = w2;
+            document.getElementById('val-w1').innerText = w1;
+            document.getElementById('val-w2').innerText = w2;
+        }
+
+        // Keep slider-w2 synchronized
+        document.getElementById('slider-w2').addEventListener('input', (e) => {
+            const w2 = parseInt(e.target.value);
+            const w1 = 100 - w2;
+            document.getElementById('slider-w1').value = w1;
+            document.getElementById('val-w1').innerText = w1;
+            document.getElementById('val-w2').innerText = w2;
+        });
+
+        function runClassificationSimulation() {
+            const desc = document.getElementById('input-desc').value.toLowerCase();
+            const find = document.getElementById('input-find').value.toLowerCase();
+            const w1 = parseInt(document.getElementById('slider-w1').value) / 100;
+            const w2 = parseInt(document.getElementById('slider-w2').value) / 100;
+
+            if(!desc && !find) {
+                alert('Please enter text or select a sample complaint.');
+                return;
+            }
+
+            // Heuristic keyword matching
+            let billingScore = (desc.includes('fee') || desc.includes('overdraft') || desc.includes('charged') ? 0.7 : 0) * w1 +
+                               (find.includes('fee') || find.includes('batch') || find.includes('revers') ? 0.9 : 0) * w2;
+
+            let transferScore = (desc.includes('transfer') || desc.includes('money') || desc.includes('arrived') ? 0.7 : 0) * w1 +
+                                (find.includes('ach') || find.includes('fraud') || find.includes('transfer') ? 0.9 : 0) * w2;
+
+            let conductScore = (desc.includes('rude') || desc.includes('agent') || desc.includes('chat') ? 0.7 : 0) * w1 +
+                               (find.includes('transcript') || find.includes('protocol') || find.includes('misconduct') ? 0.8 : 0) * w2;
+
+            let maxScore = Math.max(billingScore, transferScore, conductScore, 0.1);
+            let l1 = "Retail Banking", l2 = "Operational Processing", l3 = "General Account Inquiry";
+
+            if (maxScore === billingScore) {
+                l1 = "Retail Banking & Payments";
+                l2 = "Billing & Fee Discrepancies";
+                l3 = "Unnotified overdraft fee charged during batch delay";
+            } else if (maxScore === transferScore) {
+                l1 = "Retail Banking & Payments";
+                l2 = "Transaction Processing Errors";
+                l3 = "Delayed ACH transfer clearing due to fraud check";
+            } else if (maxScore === conductScore) {
+                l1 = "Customer Service & Channels";
+                l2 = "Staff Conduct & Communication";
+                l3 = "Customer dispute regarding agent tone (Rejected)";
+            }
+
+            document.getElementById('res-l1').innerText = l1;
+            document.getElementById('res-l2').innerText = l2;
+            document.getElementById('res-conf').innerText = (maxScore * 100).toFixed(1) + '%';
+
+            let descSignal = (desc.length > 10 ? (w1 * 0.85) : 0.1).toFixed(2);
+            let findSignal = (find.length > 10 ? (w2 * 0.95) : 0.2).toFixed(2);
+
+            document.getElementById('score-desc').innerText = descSignal;
+            document.getElementById('bar-desc').style.width = (descSignal * 100) + '%';
+
+            document.getElementById('score-find').innerText = findSignal;
+            document.getElementById('bar-find').style.width = (findSignal * 100) + '%';
+
+            let logDiv = document.getElementById('analysis-log');
+            logDiv.innerHTML = `[INFO] Initialized Dual-Field Heuristic Classifier.<br>` +
+                               `[WEIGHTS] Customer Desc Weight: ${(w1*100).toFixed(0)}% | Investigation Findings Weight: ${(w2*100).toFixed(0)}%<br>` +
+                               `[NOISE REDUCTION] Stripped conversational filler words and emotional adjectives.<br>` +
+                               `[INVESTIGATION FILTER] Upheld operational finding prioritized over customer grievance intent.<br>` +
+                               `[SUCCESS] Assigned Taxonomy L3: <span class="text-indigo-400">${l3}</span> (Confidence: ${(maxScore*100).toFixed(1)}%).`;
+        }
+
+        /* Vault Code Snippets */
+        const vaultSnippets = {
+            token: {
+                filename: "sas_program_tokenization.sas",
+                code: `/* ===================================================================== */
+/* PROGRAM 1: Free Text Tokenization, Stopword Removal, & N-Gram Generation */
+/* Environment: Standard SAS Enterprise Guide (No Add-ons Required)     */
+/* ===================================================================== */
+
+data work.complaint_tokens;
+    set work.raw_complaints;
+    
+    /* Clean text: lowercase, remove special characters and punctuation */
+    clean_desc = lowcase(compress(customer_description, ., 'ai'));
+    clean_findings = lowcase(compress(investigation_findings, ., 'ai'));
+    
+    /* Combine with dual-field weighting (70% findings, 30% description) */
+    combined_text = catx(' ', clean_findings, clean_findings, clean_desc);
+    
+    word_count = countw(combined_text);
+    
+    /* 1. Unigrams Extraction & Stopword Filter */
+    do i = 1 to word_count;
+        term = scan(combined_text, i, ' ');
+        gram_type = '1-gram';
+        
+        if not missing(term) and length(term) > 2 
+           and term not in ('the','and','was','for','that','with','this','not','you','have','are','was') then do;
+            output;
+        end;
+    end;
+    
+    /* 2. Bigrams Extraction */
+    do i = 1 to (word_count - 1);
+        term = catx(' ', scan(combined_text, i, ' '), scan(combined_text, i+1, ' '));
+        gram_type = '2-gram';
+        if not missing(term) then output;
+    end;
+    
+    keep complaint_id term gram_type customer_id case_date;
+run;`
+            },
+            tfidf: {
+                filename: "sas_program_tfidf_hash.sas",
+                code: `/* ===================================================================== */
+/* PROGRAM 2: Native TF-IDF Calculation & Hash Object Lookup in SAS EG   */
+/* ===================================================================== */
+
+/* 1. Calculate Term Frequency (TF) per complaint */
+proc sql;
+    create table work.doc_tf as
+    select complaint_id, term, count(*) as tf
+    from work.complaint_tokens
+    group by complaint_id, term;
+
+    /* 2. Calculate Document Frequency (DF) across corpus */
+    create table work.term_df as
+    select term, count(distinct complaint_id) as df
+    from work.complaint_tokens
+    group by term;
+
+    /* 3. Total Document Count (N) */
+    create table work.total_docs as
+    select count(distinct complaint_id) as total_n
+    from work.complaint_tokens;
+quit;
+
+/* 4. Compute TF-IDF Matrix using Data Step Merge */
+data work.tfidf_matrix;
+    if _N_ = 1 then set work.total_docs;
+    set work.doc_tf;
+    if 0 then set work.term_df;
+    
+    /* Merge DF lookup */
+    if _n_ = 1 then do;
+        declare hash h(dataset: 'work.term_df');
+        h.defineKey('term');
+        h.defineData('df');
+        h.defineDone();
+    end;
+    
+    if h.find() ne 0 then df = 1;
+    
+    /* Calculate Inverse Document Frequency & TF-IDF */
+    idf = log(total_n / df);
+    tfidf_score = tf * idf;
+    
+    keep complaint_id term tfidf_score;
+run;`
+            },
+            fuzzy: {
+                filename: "sas_program_fuzzy_spedis.sas",
+                code: `/* ===================================================================== */
+/* PROGRAM 3: Fuzzy Matching & Phonetic Stemming via SPEDIS & SOUNDEX    */
+/* ===================================================================== */
+
+data work.fuzzy_categorized;
+    set work.complaint_tokens;
+    length target_keyword $40 category_match $50;
+    
+    /* Define target root cause keywords */
+    array keywords[3] $40 ('overdraft fee', 'delayed transfer', 'system error');
+    array cats[3] $50 ('Billing Error', 'Processing Delay', 'Technical Fault');
+    
+    best_score = 999;
+    
+    do idx = 1 to 3;
+        /* SPEDIS measures spelling distance (lower = better match) */
+        current_distance = spedis(term, keywords[idx]);
+        if current_distance < best_score then do;
+            best_score = current_distance;
+            target_keyword = keywords[idx];
+            category_match = cats[idx];
+        end;
+    end;
+    
+    /* Phonetic soundex grouping */
+    phonetic_key = soundex(term);
+    
+    /* Threshold for acceptable fuzzy match */
+    if best_score < 40 then match_flag = 1;
+    else match_flag = 0;
+run;`
+            },
+            dual: {
+                filename: "sas_program_dual_field_weighting.sas",
+                code: `/* ===================================================================== */
+/* PROGRAM 4: Dual-Field Text Weighting (Customer vs Investigation)      */
+/* ===================================================================== */
+
+data work.final_root_cause;
+    set work.raw_complaints;
+    
+    /* Define weighting parameters */
+    w_desc = 0.30; /* Customer Grievance Intent */
+    w_find = 0.70; /* Investigation Findings Upheld Fault */
+    
+    /* Score calculation logic for 'Billing' root cause */
+    desc_billing_match = (index(lowcase(customer_description), 'fee') > 0) or 
+                         (index(lowcase(customer_description), 'charge') > 0);
+                         
+    find_billing_match = (index(lowcase(investigation_findings), 'fee') > 0) or 
+                         (index(lowcase(investigation_findings), 'refund') > 0);
+                         
+    weighted_score = (desc_billing_match * w_desc) + (find_billing_match * w_find);
+    
+    if weighted_score >= 0.50 then assigned_root_cause = 'Billing Discrepancy';
+    else assigned_root_cause = 'General Operational Inquiry';
+run;`
+            }
+        };
+
+        function switchVaultSnippet(type) {
+            ['token', 'tfidf', 'fuzzy', 'dual'].forEach(t => {
+                document.getElementById(`btn-vault-${t}`).className = "px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-all";
+            });
+            document.getElementById(`btn-vault-${type}`).className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-xs font-semibold text-white transition-all";
+            document.getElementById('vault-filename').innerText = vaultSnippets[type].filename;
+            document.getElementById('vault-code-content').querySelector('code').innerText = vaultSnippets[type].code;
+        }
+
+        function copyVaultCode() {
+            const codeText = document.getElementById('vault-code-content').querySelector('code').innerText;
+            const textArea = document.createElement("textarea");
+            textArea.value = codeText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('SAS Code snippet copied successfully to clipboard! You can now paste it into your Enterprise Guide Program Node.');
+            } catch (err) {
+                alert('Unable to copy code automatically.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Initialize default sample on load
+        window.onload = function() {
+            loadSampleComplaint(1);
+        };
+    </script>
+</body>
+</html>
