@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complaint Root-Cause Workbench</title>
+<style>
+:root{
+  --bg:#f6f3ec;--panel:#fffdf8;--ink:#1d2a33;--muted:#5d6b75;--line:#ddd6c6;
+  --teal:#0f766e;--teal-l:#d9efeb;--amber:#b45309;--amber-l:#fbe9cf;--red:#b42318;--red-l:#fbdcd8;
+  --blue:#1d4ed8;--blue-l:#dfe8fd;--grey-l:#ebe7dc;--code-bg:#15222b;--code-ink:#e6edf1;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans)}
+header{background:var(--ink);color:#f4efe3;padding:18px 24px 0}
+header h1{margin:0;font:600 22px/1.2 var(--serif);letter-spacing:.2px}
+header p{margin:4px 0 12px;color:#b9c4cb;font-size:13px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:transparent;border:0;color:#b9c4cb;padding:9px 16px;font:600 13px var(--sans);cursor:pointer;border-radius:8px 8px 0 0}
+nav button:hover{color:#fff}
+nav button.on{background:var(--bg);color:var(--ink)}
+main{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+section.tab{display:none}
+section.tab.on{display:block}
+h2{font:600 22px var(--serif);margin:0 0 6px}
+h3{font:600 16px var(--serif);margin:18px 0 6px}
+.lead{color:var(--muted);margin:0 0 16px;max-width:820px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+label{display:block;font:600 12px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:0 0 4px}
+textarea,input[type=text],select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:14px var(--sans);color:var(--ink)}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--teal);outline-offset:0}
+button.btn{background:var(--teal);color:#fff;border:0;padding:8px 14px;border-radius:8px;font:600 13px var(--sans);cursor:pointer}
+button.btn.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.btn:hover{filter:brightness(1.08)}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font:600 11px var(--sans);letter-spacing:.3px;margin-right:6px;white-space:nowrap}
+.c-CUST{background:var(--blue-l);color:var(--blue)}.c-VENT{background:var(--amber-l);color:var(--amber)}
+.c-UPHELD{background:var(--teal-l);color:var(--teal)}.c-NOTUP{background:var(--red-l);color:var(--red)}
+.c-NEUTRAL{background:var(--grey-l);color:var(--muted)}.c-ADMIN{background:#ece6f6;color:#5b3d99}
+.tok{display:inline-block;padding:2px 8px;margin:2px 3px 2px 0;background:var(--grey-l);border-radius:6px;font:13px var(--mono)}
+.tok.hit{background:var(--teal-l);color:var(--teal);font-weight:700}
+.sent{padding:8px 0;border-bottom:1px dashed var(--line)}
+.sent:last-child{border-bottom:0}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+code,.mono{font-family:var(--mono);font-size:13px}
+.lessons{display:grid;grid-template-columns:230px 1fr;gap:18px}
+@media(max-width:860px){.lessons{grid-template-columns:1fr}}
+.lnav button{display:block;width:100%;text-align:left;background:transparent;border:1px solid transparent;padding:9px 12px;border-radius:9px;font:600 13px var(--sans);color:var(--ink);cursor:pointer;margin-bottom:3px}
+.lnav button span{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:var(--grey-l);margin-right:8px;font-size:12px}
+.lnav button.on{background:var(--panel);border-color:var(--line)}
+.lnav button.on span{background:var(--teal);color:#fff}
+.codewrap{position:relative;margin:10px 0}
+.codewrap pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow:auto;max-height:440px;font:12.5px/1.5 var(--mono);tab-size:2}
+.copy{position:absolute;top:8px;right:8px;background:#2b3d49;color:#dbe6ec;border:0;border-radius:6px;padding:4px 10px;font:600 11px var(--sans);cursor:pointer}
+.copy:hover{background:var(--teal)}
+.sas-c{color:#7f95a3}.sas-k{color:#f2b56b}.sas-s{color:#9ad6a8}
+.note{background:var(--amber-l);border-left:4px solid var(--amber);padding:9px 12px;border-radius:6px;font-size:13px;margin:10px 0}
+.good{background:var(--teal-l);border-left-color:var(--teal)}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px}
+@media(max-width:860px){.sliders{grid-template-columns:1fr}}
+.srow{display:grid;grid-template-columns:1fr 54px;gap:8px;align-items:center;font-size:13px}
+.srow small{color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.bar .nm{width:230px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{position:relative;flex:1;height:18px;background:var(--grey-l);border-radius:5px}
+.bar .mid{position:absolute;top:0;bottom:0;width:1px;background:var(--muted)}
+.bar .seg{position:absolute;top:2px;bottom:2px;border-radius:3px}
+.seg.d{background:var(--blue)}.seg.f{background:var(--teal)}.seg.neg{background:var(--red)}
+.bar .val{width:52px;text-align:right;font-family:var(--mono);font-size:12px}
+.legend span{margin-right:14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.result{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:860px){.result{grid-template-columns:1fr}}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+.kpi b{display:block;font:600 11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.kpi div{font:600 17px var(--serif);margin-top:2px}
+.st-CLASSIFIED{color:var(--teal)}.st-ALLEGED_NOT_UPHELD,.st-UNCLASSIFIED{color:var(--red)}
+.st-CUSTOMER_VIEW_ONLY,.st-LOW_CONFIDENCE_REVIEW{color:var(--amber)}
+.tree ul{list-style:none;margin:0;padding-left:20px;border-left:2px solid var(--line)}
+.tree>ul{border-left:0;padding-left:0}
+.tree li{margin:4px 0}
+.tree .node{cursor:pointer;padding:5px 9px;border-radius:8px;display:inline-block}
+.tree .node:hover{background:var(--grey-l)}
+.tree .node.sel{background:var(--teal-l)}
+.tree .lv{font:700 10px var(--sans);color:var(--muted);margin-right:7px;letter-spacing:.5px}
+.er{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.ent{border:1.5px solid var(--ink);border-radius:8px;background:#fff;min-width:170px;font:12px var(--mono);overflow:hidden}
+.ent h4{margin:0;background:var(--ink);color:#fff;padding:5px 9px;font:600 12px var(--mono)}
+.ent div{padding:2px 9px}
+.ent .pk{font-weight:700;color:var(--teal)}.ent .fk{font-weight:700;color:var(--amber)}
+.arrow{align-self:center;color:var(--muted);font-size:20px}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.flow .box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:12px var(--mono)}
+.filelist button{display:block;width:100%;text-align:left;padding:9px 11px;border:1px solid var(--line);background:var(--panel);border-radius:9px;margin-bottom:6px;cursor:pointer;font:13px var(--sans)}
+.filelist button b{display:block;font:600 13px var(--mono)}
+.filelist button small{color:var(--muted)}
+.filelist button.on{border-color:var(--teal);background:var(--teal-l)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font:600 13px var(--sans);opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.inline-row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.inline-row>div{flex:1;min-width:150px}
+a.linkcard{display:flex;align-items:center;justify-content:space-between;gap:14px;text-decoration:none;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:14px 18px;margin-bottom:18px}
+a.linkcard:hover{border-color:var(--teal);border-left-color:var(--teal)}
+a.linkcard b{display:block;font:600 16px var(--serif)}
+a.linkcard small{color:var(--muted);font-size:13px}
+a.linkcard span{font:600 13px var(--sans);color:var(--teal);white-space:nowrap}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Complaint Root-Cause Workbench</h1>
+  <p>Learn, test and build a Base SAS text-classification pipeline: customer voice weighed against investigation findings.</p>
+  <nav id="nav">
+    <button data-tab="learn" class="on">Learn</button>
+    <button data-tab="sandbox">Weighting sandbox</button>
+    <button data-tab="taxonomy">Taxonomy explorer</button>
+    <button data-tab="builder">Tool builder</button>
+    <button data-tab="code">SAS code</button>
+  </nav>
+</header>
+<main>
+  <section class="tab on" id="tab-learn"></section>
+  <section class="tab" id="tab-sandbox"></section>
+  <section class="tab" id="tab-taxonomy"></section>
+  <section class="tab" id="tab-builder"></section>
+  <section class="tab" id="tab-code"></section>
+</main>
+<footer>Runs entirely in your browser. The JavaScript engine mirrors the SAS pipeline; SAS SPEDIS is approximated here, so exact distance values can differ slightly.</footer>
+<div class="toast" id="toast">Copied</div>
+<script>
+const DATA = {"tax_l1": [{"l1_id": "PAY", "l1_name": "Payments & Transfers", "l1_desc": "Money movement: faster payments, standing orders, cards, fraud and scams"}, {"l1_id": "ACC", "l1_name": "Account Servicing", "l1_desc": "Access, changes, fees and charges on existing accounts"}, {"l1_id": "LND", "l1_name": "Lending & Credit", "l1_desc": "Applications, affordability decisions, arrears and collections"}, {"l1_id": "SVC", "l1_name": "Service & Conduct", "l1_desc": "How we communicated, handled the complaint and treated the customer"}], "tax_l2": [{"l2_id": "PAY01", "l1_id": "PAY", "l2_name": "Failed or delayed payment"}, {"l2_id": "PAY02", "l1_id": "PAY", "l2_name": "Fraud and scam handling"}, {"l2_id": "ACC01", "l1_id": "ACC", "l2_name": "Account access and changes"}, {"l2_id": "ACC02", "l1_id": "ACC", "l2_name": "Fees and charges"}, {"l2_id": "LND01", "l1_id": "LND", "l2_name": "Application and decisioning"}, {"l2_id": "LND02", "l1_id": "LND", "l2_name": "Arrears and collections"}, {"l2_id": "SVC01", "l1_id": "SVC", "l2_name": "Communication and complaint handling"}, {"l2_id": "SVC02", "l1_id": "SVC", "l2_name": "Staff conduct and advice"}], "tax_l3": [{"l3_id": "PAY01.1", "l2_id": "PAY01", "l3_name": "System or processing fault", "l3_def": "Payment failed or was delayed because of a system, batch or technical fault"}, {"l3_id": "PAY01.2", "l2_id": "PAY01", "l3_name": "Manual processing error", "l3_def": "Payment failed or went wrong because a colleague keyed or actioned it incorrectly"}, {"l3_id": "PAY02.1", "l2_id": "PAY02", "l3_name": "Fraud alert not actioned", "l3_def": "Fraud warning, block or report was not acted on in time"}, {"l3_id": "PAY02.2", "l2_id": "PAY02", "l3_name": "Inadequate scam warning", "l3_def": "Customer was not given a clear scam warning or intervention"}, {"l3_id": "ACC01.1", "l2_id": "ACC01", "l3_name": "Lockout or verification friction", "l3_def": "Customer could not access the account because of ID or security checks"}, {"l3_id": "ACC01.2", "l2_id": "ACC01", "l3_name": "Incorrect account change", "l3_def": "Details or settings were changed wrongly or without consent"}, {"l3_id": "ACC02.1", "l2_id": "ACC02", "l3_name": "Fee wrongly applied", "l3_def": "A fee or charge was applied that should not have been"}, {"l3_id": "ACC02.2", "l2_id": "ACC02", "l3_name": "Fee not disclosed", "l3_def": "Fee or interest was not made clear before it applied"}, {"l3_id": "LND01.1", "l2_id": "LND01", "l3_name": "Incorrect affordability decision", "l3_def": "Application declined or approved on wrong affordability assessment"}, {"l3_id": "LND01.2", "l2_id": "LND01", "l3_name": "Application delay", "l3_def": "Application or decision took longer than promised"}, {"l3_id": "LND02.1", "l2_id": "LND02", "l3_name": "Inappropriate arrears contact", "l3_def": "Collections contact was too frequent, wrong channel or wrong tone"}, {"l3_id": "LND02.2", "l2_id": "LND02", "l3_name": "Vulnerability not recognised", "l3_def": "Signs of vulnerability were missed or not acted on"}, {"l3_id": "SVC01.1", "l2_id": "SVC01", "l3_name": "No response or chasing", "l3_def": "Customer had to chase, or no reply was given within timescale"}, {"l3_id": "SVC01.2", "l2_id": "SVC01", "l3_name": "Incorrect information given", "l3_def": "Customer was given wrong or conflicting information"}, {"l3_id": "SVC02.1", "l2_id": "SVC02", "l3_name": "Poor advice", "l3_def": "Advice given was unsuitable or misleading"}, {"l3_id": "SVC02.2", "l2_id": "SVC02", "l3_name": "Unprofessional handling", "l3_def": "Rude, dismissive or unprofessional treatment"}], "tax_trigger": [{"trg_id": "T01", "trg_name": "Financial loss or hardship", "trg_def": "Money lost, charged or put at risk"}, {"trg_id": "T02", "trg_name": "Time and effort lost", "trg_def": "Chasing, waiting, repeated contact"}, {"trg_id": "T03", "trg_name": "Trust and fairness", "trg_def": "Felt misled, ignored or treated unfairly"}, {"trg_id": "T04", "trg_name": "Distress and anxiety", "trg_def": "Worry, stress, embarrassment"}, {"trg_id": "T05", "trg_name": "Anger and outrage", "trg_def": "Strong anger, unacceptable service"}], "kw_map": [{"kw_type": "ROOT", "l3_id": "PAY01.1", "trg_id": "", "keyword": "system error", "kw_weight": 1.0, "kw_id": 1}, {"kw_type": "ROOT", "l3_id": "PAY01.1", "trg_id": "", "keyword": "system outage", "kw_weight": 1.0, "kw_id": 2}, {"kw_type": "ROOT", "l3_id": "PAY01.1", "trg_id": "", "keyword": "technical fault", "kw_weight": 1.0, "kw_id": 3}, {"kw_type": "ROOT", "l3_id": "PAY01.1", "trg_id": "", "keyword": "payment failed", "kw_weight": 0.5, "kw_id": 4}, {"kw_type": "ROOT", "l3_id": "PAY01.2", "trg_id": "", "keyword": "keying error", "kw_weight": 1.0, "kw_id": 5}, {"kw_type": "ROOT", "l3_id": "PAY01.2", "trg_id": "", "keyword": "wrong account", "kw_weight": 0.5, "kw_id": 6}, {"kw_type": "ROOT", "l3_id": "PAY01.2", "trg_id": "", "keyword": "manual error", "kw_weight": 1.0, "kw_id": 7}, {"kw_type": "ROOT", "l3_id": "PAY01.2", "trg_id": "", "keyword": "processed incorrectly", "kw_weight": 1.0, "kw_id": 8}, {"kw_type": "ROOT", "l3_id": "PAY02.1", "trg_id": "", "keyword": "fraud alert", "kw_weight": 0.5, "kw_id": 9}, {"kw_type": "ROOT", "l3_id": "PAY02.1", "trg_id": "", "keyword": "failed to block", "kw_weight": 1.0, "kw_id": 10}, {"kw_type": "ROOT", "l3_id": "PAY02.1", "trg_id": "", "keyword": "did not act", "kw_weight": 0.5, "kw_id": 11}, {"kw_type": "ROOT", "l3_id": "PAY02.1", "trg_id": "", "keyword": "fraud team delay", "kw_weight": 1.0, "kw_id": 12}, {"kw_type": "ROOT", "l3_id": "PAY02.2", "trg_id": "", "keyword": "scam warning", "kw_weight": 1.0, "kw_id": 13}, {"kw_type": "ROOT", "l3_id": "PAY02.2", "trg_id": "", "keyword": "no warning", "kw_weight": 0.5, "kw_id": 14}, {"kw_type": "ROOT", "l3_id": "PAY02.2", "trg_id": "", "keyword": "should have intervened", "kw_weight": 1.0, "kw_id": 15}, {"kw_type": "ROOT", "l3_id": "ACC01.1", "trg_id": "", "keyword": "locked out", "kw_weight": 1.0, "kw_id": 16}, {"kw_type": "ROOT", "l3_id": "ACC01.1", "trg_id": "", "keyword": "verification failed", "kw_weight": 1.0, "kw_id": 17}, {"kw_type": "ROOT", "l3_id": "ACC01.1", "trg_id": "", "keyword": "security check", "kw_weight": 0.5, "kw_id": 18}, {"kw_type": "ROOT", "l3_id": "ACC01.2", "trg_id": "", "keyword": "changed without consent", "kw_weight": 1.0, "kw_id": 19}, {"kw_type": "ROOT", "l3_id": "ACC01.2", "trg_id": "", "keyword": "details amended", "kw_weight": 0.5, "kw_id": 20}, {"kw_type": "ROOT", "l3_id": "ACC01.2", "trg_id": "", "keyword": "incorrect change", "kw_weight": 1.0, "kw_id": 21}, {"kw_type": "ROOT", "l3_id": "ACC02.1", "trg_id": "", "keyword": "fee applied incorrectly", "kw_weight": 1.0, "kw_id": 22}, {"kw_type": "ROOT", "l3_id": "ACC02.1", "trg_id": "", "keyword": "charged twice", "kw_weight": 1.0, "kw_id": 23}, {"kw_type": "ROOT", "l3_id": "ACC02.1", "trg_id": "", "keyword": "refund fee", "kw_weight": 0.5, "kw_id": 24}, {"kw_type": "ROOT", "l3_id": "ACC02.2", "trg_id": "", "keyword": "fee not disclosed", "kw_weight": 1.0, "kw_id": 25}, {"kw_type": "ROOT", "l3_id": "ACC02.2", "trg_id": "", "keyword": "not made clear", "kw_weight": 0.5, "kw_id": 26}, {"kw_type": "ROOT", "l3_id": "ACC02.2", "trg_id": "", "keyword": "terms unclear", "kw_weight": 0.5, "kw_id": 27}, {"kw_type": "ROOT", "l3_id": "LND01.1", "trg_id": "", "keyword": "affordability assessment", "kw_weight": 1.0, "kw_id": 28}, {"kw_type": "ROOT", "l3_id": "LND01.1", "trg_id": "", "keyword": "declined incorrectly", "kw_weight": 1.0, "kw_id": 29}, {"kw_type": "ROOT", "l3_id": "LND01.1", "trg_id": "", "keyword": "income miscalculated", "kw_weight": 1.0, "kw_id": 30}, {"kw_type": "ROOT", "l3_id": "LND01.2", "trg_id": "", "keyword": "application delay", "kw_weight": 1.0, "kw_id": 31}, {"kw_type": "ROOT", "l3_id": "LND01.2", "trg_id": "", "keyword": "decision took longer", "kw_weight": 1.0, "kw_id": 32}, {"kw_type": "ROOT", "l3_id": "LND01.2", "trg_id": "", "keyword": "awaiting decision", "kw_weight": 0.5, "kw_id": 33}, {"kw_type": "ROOT", "l3_id": "LND02.1", "trg_id": "", "keyword": "excessive calls", "kw_weight": 1.0, "kw_id": 34}, {"kw_type": "ROOT", "l3_id": "LND02.1", "trg_id": "", "keyword": "collections contact", "kw_weight": 0.5, "kw_id": 35}, {"kw_type": "ROOT", "l3_id": "LND02.1", "trg_id": "", "keyword": "arrears letter", "kw_weight": 0.5, "kw_id": 36}, {"kw_type": "ROOT", "l3_id": "LND02.2", "trg_id": "", "keyword": "vulnerability", "kw_weight": 1.0, "kw_id": 37}, {"kw_type": "ROOT", "l3_id": "LND02.2", "trg_id": "", "keyword": "did not recognise", "kw_weight": 0.5, "kw_id": 38}, {"kw_type": "ROOT", "l3_id": "LND02.2", "trg_id": "", "keyword": "bereavement", "kw_weight": 0.5, "kw_id": 39}, {"kw_type": "ROOT", "l3_id": "SVC01.1", "trg_id": "", "keyword": "no response", "kw_weight": 1.0, "kw_id": 40}, {"kw_type": "ROOT", "l3_id": "SVC01.1", "trg_id": "", "keyword": "failed to reply", "kw_weight": 1.0, "kw_id": 41}, {"kw_type": "ROOT", "l3_id": "SVC01.1", "trg_id": "", "keyword": "chased", "kw_weight": 0.5, "kw_id": 42}, {"kw_type": "ROOT", "l3_id": "SVC01.2", "trg_id": "", "keyword": "incorrect information", "kw_weight": 1.0, "kw_id": 43}, {"kw_type": "ROOT", "l3_id": "SVC01.2", "trg_id": "", "keyword": "wrongly told", "kw_weight": 1.0, "kw_id": 44}, {"kw_type": "ROOT", "l3_id": "SVC01.2", "trg_id": "", "keyword": "conflicting advice", "kw_weight": 1.0, "kw_id": 45}, {"kw_type": "ROOT", "l3_id": "SVC02.1", "trg_id": "", "keyword": "unsuitable advice", "kw_weight": 1.0, "kw_id": 46}, {"kw_type": "ROOT", "l3_id": "SVC02.1", "trg_id": "", "keyword": "poor advice", "kw_weight": 1.0, "kw_id": 47}, {"kw_type": "ROOT", "l3_id": "SVC02.1", "trg_id": "", "keyword": "misled", "kw_weight": 0.5, "kw_id": 48}, {"kw_type": "ROOT", "l3_id": "SVC02.2", "trg_id": "", "keyword": "rude", "kw_weight": 1.0, "kw_id": 49}, {"kw_type": "ROOT", "l3_id": "SVC02.2", "trg_id": "", "keyword": "dismissive", "kw_weight": 1.0, "kw_id": 50}, {"kw_type": "ROOT", "l3_id": "SVC02.2", "trg_id": "", "keyword": "unprofessional", "kw_weight": 1.0, "kw_id": 51}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T01", "keyword": "out of pocket", "kw_weight": 1.0, "kw_id": 52}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T01", "keyword": "hardship", "kw_weight": 1.0, "kw_id": 53}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T01", "keyword": "lost money", "kw_weight": 1.0, "kw_id": 54}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T01", "keyword": "overdrawn", "kw_weight": 0.5, "kw_id": 55}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T02", "keyword": "hours on the phone", "kw_weight": 1.0, "kw_id": 56}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T02", "keyword": "still waiting", "kw_weight": 1.0, "kw_id": 57}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T02", "keyword": "had to chase", "kw_weight": 1.0, "kw_id": 58}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T02", "keyword": "waited weeks", "kw_weight": 1.0, "kw_id": 59}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T03", "keyword": "not fair", "kw_weight": 1.0, "kw_id": 60}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T03", "keyword": "ignored", "kw_weight": 1.0, "kw_id": 61}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T03", "keyword": "misled", "kw_weight": 1.0, "kw_id": 62}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T03", "keyword": "lied", "kw_weight": 1.0, "kw_id": 63}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T04", "keyword": "stressed", "kw_weight": 1.0, "kw_id": 64}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T04", "keyword": "anxious", "kw_weight": 1.0, "kw_id": 65}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T04", "keyword": "worried", "kw_weight": 0.5, "kw_id": 66}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T04", "keyword": "embarrassed", "kw_weight": 1.0, "kw_id": 67}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T05", "keyword": "disgusted", "kw_weight": 1.0, "kw_id": 68}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T05", "keyword": "furious", "kw_weight": 1.0, "kw_id": 69}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T05", "keyword": "appalling", "kw_weight": 1.0, "kw_id": 70}, {"kw_type": "TRIGGER", "l3_id": "", "trg_id": "T05", "keyword": "unacceptable", "kw_weight": 1.0, "kw_id": 71}], "stopwords": ["a", "an", "the", "and", "or", "but", "if", "of", "to", "in", "on", "at", "by", "for", "with", "from", "as", "is", "are", "was", "were", "be", "been", "being", "am", "it", "its", "this", "that", "these", "those", "i", "me", "my", "we", "our", "us", "you", "your", "he", "she", "they", "them", "their", "have", "has", "had", "do", "does", "did", "done", "would", "could", "should", "will", "can", "may", "might", "must", "so", "than", "then", "there", "here", "when", "what", "which", "who", "whom", "how", "why", "also", "just", "very", "really", "please", "thank", "thanks", "dear", "regards", "sincerely", "hello", "hi", "again", "about", "into", "over", "under", "out", "up", "down", "off", "after", "before", "while", "during", "because", "since", "until", "per", "via", "etc"], "lemma_map": {"paid": "pay", "sent": "send", "told": "tell", "gave": "give", "took": "take", "lost": "lose", "kept": "keep", "made": "make", "wrote": "write", "bought": "buy", "said": "say", "went": "go", "got": "get", "knew": "know", "felt": "feel", "left": "leave", "charged": "charge", "refunded": "refund", "declined": "decline"}, "weight_matrix": [{"purpose": "ROOT", "field": "D", "sect": "CUST", "w": 0.35, "rationale": "Customer view: useful pointer, not proof of cause"}, {"purpose": "ROOT", "field": "D", "sect": "VENT", "w": 0.05, "rationale": "Venting: almost no causal information"}, {"purpose": "ROOT", "field": "F", "sect": "UPHELD", "w": 1.0, "rationale": "Business agreed: strongest root-cause evidence"}, {"purpose": "ROOT", "field": "F", "sect": "NEUTRAL", "w": 0.5, "rationale": "Investigation fact, no determination"}, {"purpose": "ROOT", "field": "F", "sect": "NOTUP", "w": -0.3, "rationale": "Rejected aspect: evidence this is NOT the cause"}, {"purpose": "ROOT", "field": "F", "sect": "ADMIN", "w": 0.0, "rationale": "Case-handling notes: never a cause"}, {"purpose": "TRIGGER", "field": "D", "sect": "CUST", "w": 1.0, "rationale": "Customer own words drive trigger and emotion"}, {"purpose": "TRIGGER", "field": "D", "sect": "VENT", "w": 0.8, "rationale": "Venting is the best emotion signal"}, {"purpose": "TRIGGER", "field": "F", "sect": "UPHELD", "w": 0.2, "rationale": "Business acknowledgement of impact"}, {"purpose": "TRIGGER", "field": "F", "sect": "NEUTRAL", "w": 0.1, "rationale": "Little emotional content"}, {"purpose": "TRIGGER", "field": "F", "sect": "NOTUP", "w": 0.0, "rationale": "Not relevant to trigger"}, {"purpose": "TRIGGER", "field": "F", "sect": "ADMIN", "w": 0.0, "rationale": "Case-handling notes"}], "complaints_raw": [{"complaint_id": 1001, "description": "My standing order failed for the third month and I was charged twice for the overdraft. I have spent hours on the phone and I am furious. Absolutely disgraceful service!", "findings_of_investigation": "Call ref 88231 logged. We reviewed the payment history and found the standing order failed because of a system error during the batch run. This aspect of the complaint is upheld. The overdraft charges were refunded."}, {"complaint_id": 1002, "description": "I was locked out of my account for two weeks and nobody would help. I am stressed and worried about my rent.", "findings_of_investigation": "Case opened and forwarded to the security team. The verification failed because the ID check flagged a mismatch. We should have offered an alternative route. The complaint is upheld. We did not find evidence the account was closed in error."}, {"complaint_id": 1003, "description": "The advisor was rude and dismissive on the phone and told me the wrong thing about my loan. This is unacceptable.", "findings_of_investigation": "We listened to the call recording. The advisor was not rude and acted professionally. This part is not upheld. However the advisor gave incorrect information about the settlement figure, which is upheld."}, {"complaint_id": 1004, "description": "Your collections team keep calling me daily even though I told them about my bereavement. I feel harassed and embarrassed.", "findings_of_investigation": "Reviewed by team leader. Vulnerability was not recorded on the account so the collections contact continued. We did not recognise the bereavement. Complaint upheld and account notes updated."}, {"complaint_id": 1005, "description": "I sent money to what turned out to be a scammer. The bank gave me no warning at all. I am out of pocket and it is not fair.", "findings_of_investigation": "The payment was in line with the customer instructions. We found the scam warning shown at the time was appropriate. Complaint not upheld. Email sent to the customer explaining the outcome."}, {"complaint_id": 1006, "description": "My loan application has been awaiting a decison for six weeks and I still waiting for an answer. I had to chase every week.", "findings_of_investigation": "Application delay confirmed. The decision took longer than our standard because the file was queued. We agree this was our error. Complaint upheld. Compensation paid."}, {"complaint_id": 1007, "description": "A fee was applied to my acount and I was never told about it. Charges were not made clear.", "findings_of_investigation": "We reviewed the account terms. The fee was correctly applied under the terms. Fee not disclosed at point of sale was not evidenced. Not upheld."}, {"complaint_id": 1008, "description": "They keyed my payment to the wrong account and I lost money. I feel misled and ignored.", "findings_of_investigation": "The payment was processed incorrectly due to a manual error by the colleague who keyed the sort code. Upheld. Funds were recovered. Case closed."}]};
+/* Complaint root-cause engine: JS port of the SAS pipeline (steps 01-05).
+   Mirrors the SAS logic so the workbench sandbox behaves like the real code.
+   spedis() is an approximation (Damerau-Levenshtein scaled x100/len) - exact SAS values differ a little. */
+(function (root) {
+  'use strict';
+  const D = (typeof DATA !== 'undefined') ? DATA : root.DATA;
+
+  /* ---------- 02: stemmer (port of stemw FCMP) ---------- */
+  function stemw(w) {
+    let s = String(w).trim().toLowerCase();
+    if (s.length <= 3) return s;
+    s = s.replace(/sses$/, 'ss');
+    if (s.length > 4) s = s.replace(/ies$/, 'y');
+    if (s.length > 3 && /[^s]s$/.test(s)) s = s.slice(0, -1);
+    if (/(ing|ed)$/.test(s)) {
+      const t = s.replace(/(ing|ed)$/, '');
+      if (t.length >= 3 && /[aeiouy]/.test(t)) s = t.replace(/([^aeioulsz])\1$/, '$1');
+    }
+    if (s.length > 3) s = s.replace(/e$/, '');
+    if (s.length > 5) s = s.replace(/(ment|ness)$/, '');
+    if (s.length > 5) s = s.replace(/ly$/, '');
+    if (s.length > 3 && /[^aeiou]y$/.test(s)) s = s.slice(0, -1) + 'i';
+    return s;
+  }
+
+  const STOP = new Set(D.stopwords);
+  const LEMMA = D.lemma_map;
+
+  /* ---------- 01: segmentation + section tagging ---------- */
+  const RE_ADMIN = /\b(call ref|case (opened|closed|logged)|logged|forwarded to|email sent|reviewed by|team leader|listened to the call|acknowledg\w*|compensation paid|funds were recovered|notes updated)\b/i;
+  const RE_NOTUP = /\b(not upheld|no evidence|did not find|acted (correctly|professionally)|was not rude|in line with|was appropriate|correctly applied|not evidenced)\b/i;
+  const RE_UP = /\b(upheld|we agree|our error|should have|was not recorded|we did not recognise|confirmed|failed because|due to a)\b/i;
+  const RE_VENT = /\b(disgrace\w*|outrage\w*|appalling|ridiculous|absolutely|furious|fed up|joke|useless|shambles)\b/i;
+
+  function segment(text, field) {
+    const prot = String(text || '').replace(/(\d)\.(\d)/g, '$1~$2');
+    const parts = prot.split(/[.!?]+/).map(x => x.replace(/~/g, '.').trim());
+    const out = []; let n = 0;
+    parts.forEach(p => {
+      if (p.length < 3) return;
+      n++;
+      let sect;
+      if (field === 'D') sect = (RE_VENT.test(p) && p.split(/\s+/).length <= 10) ? 'VENT' : 'CUST';
+      else if (RE_ADMIN.test(p) && !RE_UP.test(p)) sect = 'ADMIN';
+      else if (RE_NOTUP.test(p)) sect = 'NOTUP';
+      else if (RE_UP.test(p)) sect = 'UPHELD';
+      else sect = 'NEUTRAL';
+      out.push({ field, sent_no: n, text: p, sect });
+    });
+    return out;
+  }
+
+  /* ---------- 01/02: tokenise -> stop -> lemma -> stem -> n-grams ---------- */
+  function tokens(text, stem) {
+    const clean = text.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const kept = [];
+    clean.split(' ').forEach(w => {
+      if (w.length < 2) return;
+      if (/^\d+$/.test(w)) return;
+      if (STOP.has(w)) return;
+      if (stem) { if (LEMMA[w]) w = LEMMA[w]; w = stemw(w); }
+      if (kept.length < 200) kept.push(w);
+    });
+    return kept;
+  }
+  function ngrams(toks, maxn) {
+    const out = [];
+    for (let n = 1; n <= (maxn || 3); n++)
+      for (let i = 0; i + n <= toks.length; i++) out.push({ n, ngram: toks.slice(i, i + n).join(' ') });
+    return out;
+  }
+
+  /* ---------- keyword map through the same pipeline ---------- */
+  const KW = D.kw_map.map(k => {
+    const t = tokens(k.keyword, true);
+    return Object.assign({}, k, { kw_stem: t.join(' '), ngram_n: t.length, kw_sdx: soundex(t.join('')) });
+  }).filter(k => k.ngram_n >= 1 && k.ngram_n <= 3);
+
+  /* ---------- 04: distances ---------- */
+  function complev(a, b) {
+    const m = a.length, n = b.length; const d = [];
+    for (let i = 0; i <= m; i++) { d[i] = [i]; }
+    for (let j = 1; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[m][n];
+  }
+  function spedis(a, b) {              /* approximation: Damerau-Levenshtein x100 / len(a) */
+    const m = a.length, n = b.length; const d = [];
+    for (let i = 0; i <= m; i++) d[i] = [i];
+    for (let j = 1; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+      const c = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return m ? d[m][n] * 100 / m : 100;
+  }
+  function soundex(s) {
+    s = String(s).toUpperCase().replace(/[^A-Z]/g, '');
+    if (!s) return '';
+    const map = { B: 1, F: 1, P: 1, V: 1, C: 2, G: 2, J: 2, K: 2, Q: 2, S: 2, X: 2, Z: 2, D: 3, T: 3, L: 4, M: 5, N: 5, R: 6 };
+    let out = s[0], last = map[s[0]] || 0;
+    for (let i = 1; i < s.length && out.length < 4; i++) {
+      const c = s[i], code = map[c] || 0;
+      if (code && code !== last) out += code;
+      if (c !== 'H' && c !== 'W') last = code;
+    }
+    return (out + '000').slice(0, 4);
+  }
+
+  /* match a set of n-gram strings against keywords: exact first, then fuzzy */
+  function matchMap(vocab, opts) {
+    const fzMin = opts.fz_min, fzLen = opts.fz_minlen;
+    const map = {};                       /* key: n|ngram -> [{kw, q, type}] */
+    vocab.forEach(v => {
+      const key = v.n + '|' + v.ngram; const hits = [];
+      KW.forEach(k => {
+        if (k.ngram_n !== v.n) return;
+        if (k.kw_stem === v.ngram) { hits.push({ kw: k, q: 1, type: 'EXACT' }); return; }
+        if (!opts.fuzzy) return;
+        if (v.ngram.length < fzLen || Math.abs(v.ngram.length - k.kw_stem.length) > 3) return;
+        const lev = complev(v.ngram, k.kw_stem), spd = spedis(v.ngram, k.kw_stem);
+        const maxlen = Math.max(v.ngram.length, k.kw_stem.length);
+        let q = Math.max(1 - lev / maxlen, Math.max(0, 1 - spd / 100));
+        if (soundex(v.ngram.replace(/ /g, '')) === k.kw_sdx) q += 0.05;
+        q = Math.min(q, 0.99);
+        if (q >= fzMin) hits.push({ kw: k, q, type: 'FUZZY', lev, spd });
+      });
+      if (hits.length) map[key] = hits;
+    });
+    return map;
+  }
+
+  root.CMP_CORE = { stemw, segment, tokens, ngrams, complev, spedis, soundex, KW, matchMap };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* engine_score.js - TF-IDF, hit weighting and dual-field scoring (SAS steps 03 and 05) */
+(function (root) {
+  'use strict';
+  const D = (typeof DATA !== 'undefined') ? DATA : root.DATA, C = root.CMP_CORE;
+  const DEFAULTS = {
+    fuzzy: true, fz_min: 0.80, fz_minlen: 6, min_df: 1, max_df_pct: 0.80,
+    min_root: 0.40, min_conf: 0.55, emo_high: 1.5, emo_med: 0.75,
+    weights: D.weight_matrix.map(r => ({ purpose: r.purpose, field: r.field, sect: r.sect, w: r.w }))
+  };
+  const L3 = Object.fromEntries(D.tax_l3.map(r => [r.l3_id, r]));
+  const L2 = Object.fromEntries(D.tax_l2.map(r => [r.l2_id, r]));
+  const L1 = Object.fromEntries(D.tax_l1.map(r => [r.l1_id, r]));
+  const TRG = Object.fromEntries(D.tax_trigger.map(r => [r.trg_id, r]));
+
+  function wOf(weights, purpose, field, sect) {
+    const r = weights.find(x => x.purpose === purpose && x.field === field && x.sect === sect);
+    return r ? r.w : 0;
+  }
+
+  function prepare(cs) {
+    return cs.map(c => {
+      const sents = C.segment(c.description, 'D').concat(C.segment(c.findings_of_investigation, 'F'));
+      sents.forEach(s => {
+        s.tokens = s.sect === 'ADMIN' ? [] : C.tokens(s.text, true);
+        s.ngrams = C.ngrams(s.tokens, 3);
+      });
+      return { complaint_id: c.complaint_id, sents };
+    });
+  }
+
+  function corpusStats(prepared) {
+    const df = {}; const N = prepared.length;
+    prepared.forEach(p => {
+      const seen = new Set();
+      p.sents.forEach(s => s.ngrams.forEach(g => seen.add(g.n + '|' + g.ngram)));
+      seen.forEach(k => { df[k] = (df[k] || 0) + 1; });
+    });
+    const idf = {}; let idfMax = 1;
+    Object.keys(df).forEach(k => { idf[k] = Math.log((1 + N) / (1 + df[k])) + 1; idfMax = Math.max(idfMax, idf[k]); });
+    return { df, idf, idfMax, N };
+  }
+
+  function scoreComplaint(p, stats, opts) {
+    const vocabSet = new Map();
+    p.sents.forEach(s => s.ngrams.forEach(g => vocabSet.set(g.n + '|' + g.ngram, g)));
+    const mm = C.matchMap([...vocabSet.values()], opts);
+    const hits = [];
+    p.sents.forEach(s => s.ngrams.forEach(g => {
+      (mm[g.n + '|' + g.ngram] || []).forEach(h => {
+        const idf = stats.idf[g.n + '|' + g.ngram] || 1;
+        const purpose = h.kw.kw_type;
+        const sw = wOf(opts.weights, purpose, s.field, s.sect);
+        hits.push({ kw: h.kw, field: s.field, sect: s.sect, sent_no: s.sent_no, ngram: g.ngram, type: h.type, q: h.q,
+          idf, sect_w: sw, score: h.kw.kw_weight * h.q * (0.5 + 0.5 * Math.min(idf / stats.idfMax, 1)) * sw });
+      });
+    }));
+    /* per keyword: damp repeats, keep D and F parts apart */
+    const byKw = {};
+    hits.forEach(h => { (byKw[h.kw.kw_id] = byKw[h.kw.kw_id] || []).push(h); });
+    const evidence = Object.values(byKw).map(hs => {
+      const cnt = hs.length, damp = (1 + Math.log(cnt)) / cnt;
+      const d = damp * hs.filter(h => h.field === 'D').reduce((a, h) => a + h.score, 0);
+      const f = damp * hs.filter(h => h.field === 'F').reduce((a, h) => a + h.score, 0);
+      const k = hs[0].kw;
+      return { kw_id: k.kw_id, kw_type: k.kw_type, keyword: k.keyword, l3_id: k.l3_id, trg_id: k.trg_id, cnt, d_score: d, f_score: f,
+        match_type: hs.some(h => h.type === 'FUZZY') && !hs.some(h => h.type === 'EXACT') ? 'FUZZY' : 'EXACT', hits: hs };
+    });
+    const roll = (type, key) => {
+      const m = {};
+      evidence.filter(e => e.kw_type === type).forEach(e => {
+        const o = m[e[key]] = m[e[key]] || { id: e[key], d: 0, f: 0, total: 0 };
+        o.d += e.d_score; o.f += e.f_score; o.total += e.d_score + e.f_score;
+      });
+      return Object.values(m).sort((a, b) => b.total - a.total);
+    };
+    const roots = roll('ROOT', 'l3_id'), trigs = roll('TRIGGER', 'trg_id');
+    const top = roots[0], second = roots[1];
+    const conf = top && top.total > 0 ? top.total / (top.total + Math.max(second ? second.total : 0, 0)) : null;
+    const nUp = p.sents.filter(s => s.field === 'F' && s.sect === 'UPHELD').length;
+    const nNot = p.sents.filter(s => s.field === 'F' && s.sect === 'NOTUP').length;
+    const emo = trigs.reduce((a, t) => a + t.total, 0);
+    const outcome = nUp > 0 && nNot > 0 ? 'PARTIAL' : nUp > 0 ? 'UPHELD' : nNot > 0 ? 'NOT UPHELD' : 'NONE';
+    let status;
+    if (top && top.total >= opts.min_root && conf >= opts.min_conf && top.f > 0) status = 'CLASSIFIED';
+    else if (top && top.f <= 0 && outcome === 'NOT UPHELD') status = 'ALLEGED_NOT_UPHELD';
+    else if (top && top.total > 0 && top.f <= 0) status = 'CUSTOMER_VIEW_ONLY';
+    else if (top && top.total > 0) status = 'LOW_CONFIDENCE_REVIEW';
+    else status = 'UNCLASSIFIED';
+    const l3 = top ? L3[top.id] : null, l2 = l3 ? L2[l3.l2_id] : null, l1 = l2 ? L1[l2.l1_id] : null;
+    return {
+      complaint_id: p.complaint_id, sents: p.sents, hits, evidence, roots, trigs,
+      l1_name: l1 && l1.l1_name, l2_name: l2 && l2.l2_name, l3_id: top && top.id, l3_name: l3 && l3.l3_name,
+      root_score: top ? top.total : 0, root_d: top ? top.d : 0, root_f: top ? top.f : 0, root_conf: conf,
+      trg_id: trigs[0] && trigs[0].id, trg_name: trigs[0] && TRG[trigs[0].id].trg_name, emo_index: emo,
+      emo_band: emo >= opts.emo_high ? 'HIGH' : emo >= opts.emo_med ? 'MEDIUM' : 'LOW',
+      outcome_signal: outcome, status
+    };
+  }
+
+  function analyse(complaints, userOpts) {
+    const opts = Object.assign({}, DEFAULTS, userOpts || {});
+    const prepared = prepare(complaints);
+    const stats = corpusStats(prepared);
+    return { opts, stats, results: prepared.map(p => scoreComplaint(p, stats, opts)) };
+  }
+
+  root.CMP = { analyse, DEFAULTS, L1, L2, L3, TRG, stemw: C.stemw, segment: C.segment, tokens: C.tokens, ngrams: C.ngrams,
+    complev: C.complev, spedis: C.spedis, soundex: C.soundex, KW: C.KW, prepare, corpusStats, scoreComplaint };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+const CODE = [{"file": "00a_setup_taxonomy.sas", "title": "Setup and 3-level taxonomy", "desc": "Libname, L1/L2/L3 tables and trigger categories.", "code": "/*==========================================================================\n  00a  SETUP + 3-LEVEL TAXONOMY  (Base SAS / Enterprise Guide program node)\n  Creates:  cmp.tax_l1, cmp.tax_l2, cmp.tax_l3, cmp.tax_trigger, cmp.kw_map\n  Run once (re-run to reset the seed). Edit &root. to any writable folder.\n==========================================================================*/\n%let root = /sasdata/complaints;      /* EDIT: e.g. C:\\Temp\\cmp on Windows  */\nlibname cmp \"&root.\";\noptions nosymbolgen nomprint validvarname=v7;\n\n/*---- LEVEL 1 : Domain / product area ------------------------------------*/\ndata cmp.tax_l1;\n  length l1_id $4 l1_name $40 l1_desc $120 active_flag 8 valid_from valid_to 8;\n  format valid_from valid_to date9.;\n  infile datalines dlm='|' truncover;\n  input l1_id $ l1_name $ l1_desc $;\n  active_flag = 1; valid_from = '01JAN2026'd; valid_to = '31DEC9999'd;\n  datalines;\nPAY|Payments & Transfers|Money movement: faster payments, standing orders, cards, fraud and scams\nACC|Account Servicing|Access, changes, fees and charges on existing accounts\nLND|Lending & Credit|Applications, affordability decisions, arrears and collections\nSVC|Service & Conduct|How we communicated, handled the complaint and treated the customer\n;\nrun;\n\n/*---- LEVEL 2 : Sub-process / failure type (FK -> l1_id) ------------------*/\ndata cmp.tax_l2;\n  length l2_id $6 l1_id $4 l2_name $50 active_flag 8;\n  infile datalines dlm='|' truncover;\n  input l2_id $ l1_id $ l2_name $;\n  active_flag = 1;\n  datalines;\nPAY01|PAY|Failed or delayed payment\nPAY02|PAY|Fraud and scam handling\nACC01|ACC|Account access and changes\nACC02|ACC|Fees and charges\nLND01|LND|Application and decisioning\nLND02|LND|Arrears and collections\nSVC01|SVC|Communication and complaint handling\nSVC02|SVC|Staff conduct and advice\n;\nrun;\n\n/*---- LEVEL 3 : Specific root cause (FK -> l2_id) -------------------------*/\ndata cmp.tax_l3;\n  length l3_id $8 l2_id $6 l3_name $50 l3_def $160 active_flag 8;\n  infile datalines dlm='|' truncover;\n  input l3_id $ l2_id $ l3_name $ l3_def $;\n  active_flag = 1;\n  datalines;\nPAY01.1|PAY01|System or processing fault|Payment failed or was delayed because of a system, batch or technical fault\nPAY01.2|PAY01|Manual processing error|Payment failed or went wrong because a colleague keyed or actioned it incorrectly\nPAY02.1|PAY02|Fraud alert not actioned|Fraud warning, block or report was not acted on in time\nPAY02.2|PAY02|Inadequate scam warning|Customer was not given a clear scam warning or intervention\nACC01.1|ACC01|Lockout or verification friction|Customer could not access the account because of ID or security checks\nACC01.2|ACC01|Incorrect account change|Details or settings were changed wrongly or without consent\nACC02.1|ACC02|Fee wrongly applied|A fee or charge was applied that should not have been\nACC02.2|ACC02|Fee not disclosed|Fee or interest was not made clear before it applied\nLND01.1|LND01|Incorrect affordability decision|Application declined or approved on wrong affordability assessment\nLND01.2|LND01|Application delay|Application or decision took longer than promised\nLND02.1|LND02|Inappropriate arrears contact|Collections contact was too frequent, wrong channel or wrong tone\nLND02.2|LND02|Vulnerability not recognised|Signs of vulnerability were missed or not acted on\nSVC01.1|SVC01|No response or chasing|Customer had to chase, or no reply was given within timescale\nSVC01.2|SVC01|Incorrect information given|Customer was given wrong or conflicting information\nSVC02.1|SVC02|Poor advice|Advice given was unsuitable or misleading\nSVC02.2|SVC02|Unprofessional handling|Rude, dismissive or unprofessional treatment\n;\nrun;\n\n/*---- Trigger categories (WHY the customer felt compelled to complain) ----*/\ndata cmp.tax_trigger;\n  length trg_id $4 trg_name $40 trg_def $100;\n  infile datalines dlm='|' truncover;\n  input trg_id $ trg_name $ trg_def $;\n  datalines;\nT01|Financial loss or hardship|Money lost, charged or put at risk\nT02|Time and effort lost|Chasing, waiting, repeated contact\nT03|Trust and fairness|Felt misled, ignored or treated unfairly\nT04|Distress and anxiety|Worry, stress, embarrassment\nT05|Anger and outrage|Strong anger, unacceptable service\n;\nrun;\n"}, {"file": "00b_keyword_map.sas", "title": "Keyword map", "desc": "ROOT and TRIGGER keywords with weights, plus an orphan check.", "code": "/*==========================================================================\n  00b  KEYWORD MAP  (what you type is normalised by the SAME pipeline as the\n  complaint text - see 04 - so plural/tense/stopword differences don't matter)\n  kw_type = ROOT    -> l3_id populated  (root-cause evidence)\n  kw_type = TRIGGER -> trg_id populated (customer emotion / intent evidence)\n  kw_weight: 1.0 = strong/specific   0.5 = supportive   0.25 = weak\n==========================================================================*/\ndata cmp.kw_map;\n  length kw_id 8 kw_type $7 l3_id $8 trg_id $4 keyword $60 kw_weight 8 source $8;\n  infile datalines dlm='|' dsd truncover;   /* DSD: '||' = missing value */\n  input kw_type $ l3_id $ trg_id $ keyword $ kw_weight;\n  kw_id = _n_; source = 'SEED';\n  datalines;\nROOT|PAY01.1||system error|1\nROOT|PAY01.1||system outage|1\nROOT|PAY01.1||technical fault|1\nROOT|PAY01.1||payment failed|0.5\nROOT|PAY01.2||keying error|1\nROOT|PAY01.2||wrong account|0.5\nROOT|PAY01.2||manual error|1\nROOT|PAY01.2||processed incorrectly|1\nROOT|PAY02.1||fraud alert|0.5\nROOT|PAY02.1||failed to block|1\nROOT|PAY02.1||did not act|0.5\nROOT|PAY02.1||fraud team delay|1\nROOT|PAY02.2||scam warning|1\nROOT|PAY02.2||no warning|0.5\nROOT|PAY02.2||should have intervened|1\nROOT|ACC01.1||locked out|1\nROOT|ACC01.1||verification failed|1\nROOT|ACC01.1||security check|0.5\nROOT|ACC01.2||changed without consent|1\nROOT|ACC01.2||details amended|0.5\nROOT|ACC01.2||incorrect change|1\nROOT|ACC02.1||fee applied incorrectly|1\nROOT|ACC02.1||charged twice|1\nROOT|ACC02.1||refund fee|0.5\nROOT|ACC02.2||fee not disclosed|1\nROOT|ACC02.2||not made clear|0.5\nROOT|ACC02.2||terms unclear|0.5\nROOT|LND01.1||affordability assessment|1\nROOT|LND01.1||declined incorrectly|1\nROOT|LND01.1||income miscalculated|1\nROOT|LND01.2||application delay|1\nROOT|LND01.2||decision took longer|1\nROOT|LND01.2||awaiting decision|0.5\nROOT|LND02.1||excessive calls|1\nROOT|LND02.1||collections contact|0.5\nROOT|LND02.1||arrears letter|0.5\nROOT|LND02.2||vulnerability|1\nROOT|LND02.2||did not recognise|0.5\nROOT|LND02.2||bereavement|0.5\nROOT|SVC01.1||no response|1\nROOT|SVC01.1||failed to reply|1\nROOT|SVC01.1||chased|0.5\nROOT|SVC01.2||incorrect information|1\nROOT|SVC01.2||wrongly told|1\nROOT|SVC01.2||conflicting advice|1\nROOT|SVC02.1||unsuitable advice|1\nROOT|SVC02.1||poor advice|1\nROOT|SVC02.1||misled|0.5\nROOT|SVC02.2||rude|1\nROOT|SVC02.2||dismissive|1\nROOT|SVC02.2||unprofessional|1\nTRIGGER||T01|out of pocket|1\nTRIGGER||T01|hardship|1\nTRIGGER||T01|lost money|1\nTRIGGER||T01|overdrawn|0.5\nTRIGGER||T02|hours on the phone|1\nTRIGGER||T02|still waiting|1\nTRIGGER||T02|had to chase|1\nTRIGGER||T02|waited weeks|1\nTRIGGER||T03|not fair|1\nTRIGGER||T03|ignored|1\nTRIGGER||T03|misled|1\nTRIGGER||T03|lied|1\nTRIGGER||T04|stressed|1\nTRIGGER||T04|anxious|1\nTRIGGER||T04|worried|0.5\nTRIGGER||T04|embarrassed|1\nTRIGGER||T05|disgusted|1\nTRIGGER||T05|furious|1\nTRIGGER||T05|appalling|1\nTRIGGER||T05|unacceptable|1\n;\nrun;\n\n/*---- Integrity check: every keyword must point at a valid parent ---------*/\nproc sql;\n  title 'ORPHAN KEYWORDS (should return 0 rows)';\n  select k.kw_id, k.keyword from cmp.kw_map k\n   where (k.kw_type='ROOT'    and k.l3_id  not in (select l3_id  from cmp.tax_l3))\n      or (k.kw_type='TRIGGER' and k.trg_id not in (select trg_id from cmp.tax_trigger));\nquit;\ntitle;\n"}, {"file": "00c_support_and_sample.sas", "title": "Support tables and sample data", "desc": "Stopwords, lemma map, weight matrix and 8 sample complaints.", "code": "/*==========================================================================\n  00c  SUPPORT TABLES + SAMPLE DATA\n  cmp.stopwords, cmp.lemma_map, cmp.weight_matrix, cmp.complaints_raw\n  NOTE: negations (not, no, never) are deliberately NOT stopwords.\n==========================================================================*/\ndata cmp.stopwords;\n  length word $40;\n  infile datalines dlm=' ' truncover;\n  input word :$40. @@;\n  datalines;\na an the and or but if of to in on at by for with from as is are was were be been\nbeing am it its this that these those i me my we our us you your he she they them\ntheir have has had do does did done would could should will can may might must\nso than then there here when what which who whom how why also just very really\nplease thank thanks dear regards sincerely hello hi again about into over under\nout up down off after before while during because since until per via etc\n;\nrun;\n\ndata cmp.lemma_map;                        /* irregular forms the suffix stripper can't fix */\n  length word $40 lemma $40;\n  infile datalines dlm=' ' truncover;\n  input word :$40. lemma :$40. @@;\n  datalines;\npaid pay sent send told tell gave give took take lost lose kept keep made make\nwrote write bought buy said say went go got get knew know felt feel left leave\ncharged charge refunded refund declined decline\n;\nrun;\n\n/*---- Weight matrix: how much each (field, section) counts, per purpose ---*/\ndata cmp.weight_matrix;\n  length purpose $7 field $1 sect $7 w 8 rationale $70;\n  infile datalines dlm='|' truncover;\n  input purpose $ field $ sect $ w rationale $;\n  datalines;\nROOT|D|CUST|0.35|Customer view: useful pointer, not proof of cause\nROOT|D|VENT|0.05|Venting: almost no causal information\nROOT|F|UPHELD|1.00|Business agreed: strongest root-cause evidence\nROOT|F|NEUTRAL|0.50|Investigation fact, no determination\nROOT|F|NOTUP|-0.30|Rejected aspect: evidence this is NOT the cause\nROOT|F|ADMIN|0.00|Case-handling notes: never a cause\nTRIGGER|D|CUST|1.00|Customer own words drive trigger and emotion\nTRIGGER|D|VENT|0.80|Venting is the best emotion signal\nTRIGGER|F|UPHELD|0.20|Business acknowledgement of impact\nTRIGGER|F|NEUTRAL|0.10|Little emotional content\nTRIGGER|F|NOTUP|0.00|Not relevant to trigger\nTRIGGER|F|ADMIN|0.00|Case-handling notes\n;\nrun;\n\n/*---- Sample complaints so the pipeline runs end-to-end -------------------*/\ndata cmp.complaints_raw;\n  length complaint_id 8 description $1000 findings_of_investigation $1000;\n  infile datalines dlm='|' truncover;\n  input complaint_id description $ findings_of_investigation $;\n  datalines;\n1001|My standing order failed for the third month and I was charged twice for the overdraft. I have spent hours on the phone and I am furious. Absolutely disgraceful service!|Call ref 88231 logged. We reviewed the payment history and found the standing order failed because of a system error during the batch run. This aspect of the complaint is upheld. The overdraft charges were refunded.\n1002|I was locked out of my account for two weeks and nobody would help. I am stressed and worried about my rent.|Case opened and forwarded to the security team. The verification failed because the ID check flagged a mismatch. We should have offered an alternative route. The complaint is upheld. We did not find evidence the account was closed in error.\n1003|The advisor was rude and dismissive on the phone and told me the wrong thing about my loan. This is unacceptable.|We listened to the call recording. The advisor was not rude and acted professionally. This part is not upheld. However the advisor gave incorrect information about the settlement figure, which is upheld.\n1004|Your collections team keep calling me daily even though I told them about my bereavement. I feel harassed and embarrassed.|Reviewed by team leader. Vulnerability was not recorded on the account so the collections contact continued. We did not recognise the bereavement. Complaint upheld and account notes updated.\n1005|I sent money to what turned out to be a scammer. The bank gave me no warning at all. I am out of pocket and it is not fair.|The payment was in line with the customer instructions. We found the scam warning shown at the time was appropriate. Complaint not upheld. Email sent to the customer explaining the outcome.\n1006|My loan application has been awaiting a decison for six weeks and I still waiting for an answer. I had to chase every week.|Application delay confirmed. The decision took longer than our standard because the file was queued. We agree this was our error. Complaint upheld. Compensation paid.\n1007|A fee was applied to my acount and I was never told about it. Charges were not made clear.|We reviewed the account terms. The fee was correctly applied under the terms. Fee not disclosed at point of sale was not evidenced. Not upheld.\n1008|They keyed my payment to the wrong account and I lost money. I feel misled and ignored.|The payment was processed incorrectly due to a manual error by the colleague who keyed the sort code. Upheld. Funds were recovered. Case closed.\n;\nrun;\n"}, {"file": "01_segment_tokenise_ngrams.sas", "title": "Segmentation, tokens and n-grams", "desc": "Sentence tagging (ADMIN/VENT/NOTUP/UPHELD) then unigrams to trigrams with scan() loops.", "code": "/*==========================================================================\n  01  SENTENCE SEGMENTATION, NOISE TAGGING, TOKENISATION, N-GRAMS\n  In : cmp.complaints_raw, cmp.stopwords, (cmp.lemma_map when stem=1)\n  Out: cmp.sentences  (one row per sentence, tagged with a section)\n       cmp.ngrams_raw (unigrams, bigrams, trigrams on cleaned tokens)\n\n  SECT codes\n    description : CUST (factual customer narrative) | VENT (short pure venting)\n    findings    : UPHELD | NOTUP (rejected aspect) | NEUTRAL | ADMIN (handler notes)\n==========================================================================*/\n\n/*---- 1. Split both fields into sentences and tag each one ----------------*/\ndata cmp.sentences;\n  set cmp.complaints_raw;\n  length field $1 text $2000 sent_text $600 sect $7;\n  retain re_admin re_notup re_up re_vent;\n  if _n_ = 1 then do;\n    re_admin = prxparse('/\\b(call ref|case (opened|closed|logged)|logged|forwarded to|email sent|reviewed by|team leader|listened to the call|acknowledg\\w*|compensation paid|funds were recovered|notes updated)\\b/i');\n    re_notup = prxparse('/\\b(not upheld|no evidence|did not find|acted (correctly|professionally)|was not rude|in line with|was appropriate|correctly applied|not evidenced)\\b/i');\n    re_up    = prxparse('/\\b(upheld|we agree|our error|should have|was not recorded|we did not recognise|confirmed|failed because|due to a)\\b/i');\n    re_vent  = prxparse('/\\b(disgrace\\w*|outrage\\w*|appalling|ridiculous|absolutely|furious|fed up|joke|useless|shambles)\\b/i');\n  end;\n\n  do field = 'D', 'F';\n    if field = 'D' then text = description; else text = findings_of_investigation;\n    text = prxchange('s/(\\d)\\.(\\d)/$1~$2/', -1, text);     /* protect decimals */\n    nsent = countw(text, '.!?');\n    do sent_no = 1 to nsent;\n      sent_text = strip(translate(scan(text, sent_no, '.!?'), '.', '~'));\n      if lengthn(sent_text) < 3 then continue;\n      if field = 'D' then do;\n        if prxmatch(re_vent, sent_text) and countw(sent_text, ' ') <= 10 then sect = 'VENT';\n        else sect = 'CUST';\n      end;\n      else do;\n        if      prxmatch(re_admin, sent_text) and not prxmatch(re_up, sent_text) then sect = 'ADMIN';\n        else if prxmatch(re_notup, sent_text) then sect = 'NOTUP';  /* checked BEFORE upheld: \"not upheld\" contains \"upheld\" */\n        else if prxmatch(re_up,    sent_text) then sect = 'UPHELD';\n        else sect = 'NEUTRAL';\n      end;\n      output;\n    end;\n  end;\n  keep complaint_id field sent_no sent_text sect;\nrun;\n\n/*---- 2. Reusable tokeniser / n-gram macro --------------------------------*/\n%macro make_ngrams(in=cmp.sentences, out=cmp.ngrams_raw, stem=0, maxn=3);\ndata &out.(keep=complaint_id field sent_no sect n ngram);\n  set &in.(where=(sect ne 'ADMIN'));            /* admin notes never reach the vocabulary */\n  length word $40 lemma $40 w $40 clean $700 ngram $120;\n  array kw{200} $40 _temporary_;\n  if _n_ = 1 then do;\n    declare hash sw(dataset:'cmp.stopwords');\n    sw.definekey('word'); sw.definedone();\n    %if &stem. %then %do;\n      declare hash lm(dataset:'cmp.lemma_map');\n      lm.definekey('word'); lm.definedata('lemma'); lm.definedone();\n    %end;\n  end;\n\n  clean = compbl(prxchange('s/[^a-z0-9 ]/ /', -1, lowcase(sent_text)));\n  k = 0;\n  do p = 1 to countw(clean, ' ');\n    w = scan(clean, p, ' ');\n    if lengthn(w) < 2 then continue;\n    if anydigit(w) and not anyalpha(w) then continue;     /* pure numbers */\n    word = w;\n    if sw.check() = 0 then continue;                       /* stopword */\n    %if &stem. %then %do;\n      lemma = ' ';\n      if lm.find() = 0 then w = lemma;                     /* irregular -> lemma */\n      w = stemw(w);                                        /* suffix stripping (FCMP, file 02) */\n    %end;\n    if k >= 200 then leave;\n    k + 1;\n    kw{k} = w;\n  end;\n\n  do n = 1 to &maxn.;\n    do i = 1 to k - n + 1;\n      ngram = kw{i};\n      do j = 1 to n - 1;\n        ngram = catx(' ', ngram, kw{i + j});\n      end;\n      output;\n    end;\n  end;\nrun;\n%mend make_ngrams;\n\n%make_ngrams(in=cmp.sentences, out=cmp.ngrams_raw, stem=0);\n\nproc freq data=cmp.sentences; tables field*sect / nopercent norow nocol; run;\nproc sql outobs=15;\n  title 'Top raw bigrams'; select ngram, count(*) as freq from cmp.ngrams_raw\n   where n=2 group by ngram order by freq desc;\nquit; title;\n"}, {"file": "02_stem_lemma_phonetic.sas", "title": "Stemming, lemmas and phonetics", "desc": "FCMP prxchange stemmer, lemma hash, soundex, keyword normalisation.", "code": "/*==========================================================================\n  02  STEMMING, \"LEMMING\" APPROXIMATION, PHONETIC KEYS\n  - stemw()      : regex suffix stripper (PROC FCMP wrapping PRXCHANGE)\n  - cmp.lemma_map: irregular forms handled by hash lookup BEFORE stemming\n  - soundex()    : phonetic key, used later as a fuzzy-match booster\n  Out: cmp.ngrams_stem, cmp.kw_norm (keywords run through the SAME pipeline)\n==========================================================================*/\nproc fcmp outlib=cmp.funcs.text;\n  function stemw(w $) $ 40;\n    length s t $ 40;\n    s = lowcase(strip(w));\n    if lengthn(s) <= 3 then return(s);\n    s = prxchange('s/sses$/ss/', 1, s);                            /* addresses -> address */\n    if lengthn(s) > 4 then s = prxchange('s/ies$/y/', 1, s);       /* queries  -> query   */\n    if lengthn(s) > 3 and prxmatch('/[^s]s$/', s) then\n      s = substr(s, 1, lengthn(s) - 1);                            /* charges -> charge   */\n    if prxmatch('/(ing|ed)$/', s) then do;\n      t = prxchange('s/(ing|ed)$//', 1, s);\n      if lengthn(t) >= 3 and prxmatch('/[aeiouy]/', t) then do;    /* must keep a vowel   */\n        s = prxchange('s/([^aeioulsz])\\1$/$1/', 1, t);             /* runn -> run         */\n      end;\n    end;\n    if lengthn(s) > 3 then s = prxchange('s/e$//', 1, s);          /* charge -> charg     */\n    if lengthn(s) > 5 then s = prxchange('s/(ment|ness)$//', 1, s);/* payment -> pay      */\n    if lengthn(s) > 5 then s = prxchange('s/ly$//', 1, s);         /* incorrectly -> incorrect */\n    if lengthn(s) > 3 and prxmatch('/[^aeiou]y$/', s) then\n      s = cats(substr(s, 1, lengthn(s) - 1), 'i');                 /* apply/applied -> appli */\n    return(s);\n  endsub;\nrun;\noptions cmplib=cmp.funcs;\n\n/*---- Quick self-test: eyeball the stemmer -------------------------------*/\ndata _stem_test;\n  length word $30 stem $30 sdx $6;\n  input word :$30. @@;\n  stem = stemw(word); sdx = soundex(stem);\n  datalines;\ncharges charged charging payment payments delayed delaying delays refused refuse\nprocessing processed process queries complaints declined decline running address\n;\nrun;\nproc print data=_stem_test noobs; run;\n\n/*---- Stemmed / lemmatised n-grams (same macro as step 01) ----------------*/\n%make_ngrams(in=cmp.sentences, out=cmp.ngrams_stem, stem=1);\n\n/*---- Normalise the keyword map through the identical pipeline ------------*/\ndata cmp.kw_norm;\n  set cmp.kw_map;\n  length word $40 lemma $40 w $40 clean $200 kw_stem $120;\n  if _n_ = 1 then do;\n    declare hash sw(dataset:'cmp.stopwords');\n    sw.definekey('word'); sw.definedone();\n    declare hash lm(dataset:'cmp.lemma_map');\n    lm.definekey('word'); lm.definedata('lemma'); lm.definedone();\n  end;\n  clean = compbl(prxchange('s/[^a-z0-9 ]/ /', -1, lowcase(keyword)));\n  ngram_n = 0; kw_stem = ' ';\n  do p = 1 to countw(clean, ' ');\n    w = scan(clean, p, ' ');\n    word = w;\n    if sw.check() = 0 then continue;\n    lemma = ' ';\n    if lm.find() = 0 then w = lemma;\n    w = stemw(w);\n    kw_stem = catx(' ', kw_stem, w);\n    ngram_n + 1;\n  end;\n  kw_sdx = soundex(compress(kw_stem));\n  if ngram_n in (1, 2, 3);          /* drop keywords that collapse to nothing or exceed trigram */\n  drop word lemma w clean p;\nrun;\n\nproc sql;\n  title 'Keywords that collapsed after stopword removal (review these)';\n  select kw_id, keyword, kw_stem, ngram_n from cmp.kw_norm where ngram_n = 1 and countw(keyword,' ') > 1;\nquit; title;\n"}, {"file": "03_tfidf.sas", "title": "TF-IDF", "desc": "PROC SQL corpus statistics with a hash lookup join and L2 normalisation.", "code": "/*==========================================================================\n  03  TF-IDF  (PROC SQL for corpus statistics, HASH for the row-level join)\n  Document = one complaint.  Term = stemmed n-gram (1-3).\n  Tunables: &min_df. drops one-off typos/noise, &max_df_pct. drops boilerplate\n  In : cmp.ngrams_stem\n  Out: cmp.tf, cmp.df_idf, cmp.tfidf (L2-normalised per complaint+field)\n==========================================================================*/\n%let min_df     = 1;      /* raise to 2+ on a real corpus (25k rows: try 3) */\n%let max_df_pct = 0.80;   /* ignore terms appearing in >80% of complaints  */\n\n/*---- 1. Term frequency per complaint+field, sub-linear (1 + ln tf) -------*/\nproc sql;\n  create table cmp.tf as\n  select complaint_id, field, n, ngram, count(*) as tf,\n         1 + log(count(*)) as tf_log\n    from cmp.ngrams_stem\n   group by complaint_id, field, n, ngram;\n\n  /*---- 2. Document frequency + smoothed IDF ------------------------------*/\n  select count(distinct complaint_id) into :ndocs trimmed from cmp.ngrams_stem;\n\n  create table cmp.df_idf as\n  select ngram, n, count(distinct complaint_id) as df,\n         log((1 + &ndocs.) / (1 + count(distinct complaint_id))) + 1 as idf\n    from cmp.ngrams_stem\n   group by ngram, n\n  having calculated df >= &min_df.\n     and calculated df <= &max_df_pct. * &ndocs.;\nquit;\n%put NOTE: corpus size = &ndocs. complaints;\n\n/*---- 3. Hash lookup join (much faster than SQL join on a big vocabulary) -*/\ndata cmp.tfidf_raw;\n  if _n_ = 1 then do;\n    length ngram $120 n 8 df 8 idf 8;\n    declare hash h(dataset:'cmp.df_idf');\n    h.definekey('ngram', 'n');\n    h.definedata('df', 'idf');\n    h.definedone();\n    call missing(df, idf);\n  end;\n  set cmp.tf;\n  if h.find() = 0 then do;\n    tfidf = tf_log * idf;\n    output;\n  end;\nrun;\n\n/*---- 4. L2-normalise each complaint+field vector (cosine-ready) ----------*/\nproc sql;\n  create table cmp.tfidf as\n  select a.*, a.tfidf / b.norm as tfidf_norm\n    from cmp.tfidf_raw a\n    inner join (select complaint_id, field, sqrt(sum(tfidf**2)) as norm\n                  from cmp.tfidf_raw group by complaint_id, field) b\n      on a.complaint_id = b.complaint_id and a.field = b.field;\nquit;\n\nproc sql outobs=15;\n  title 'Highest-weight terms in complaint 1001 (customer field)';\n  select ngram, tf, round(idf,.01) as idf, round(tfidf,.01) as tfidf\n    from cmp.tfidf where complaint_id=1001 and field='D' order by tfidf desc;\nquit; title;\n"}, {"file": "04_fuzzy_match.sas", "title": "Fuzzy search and string distance", "desc": "complev, spedis and soundex against the keyword list, plus cosine similarity matrix.", "code": "/*==========================================================================\n  04  FUZZY SEARCH + STRING DISTANCE AGAINST THE TAXONOMY KEYWORDS\n  Strategy: match the VOCABULARY once (distinct n-grams x keywords), not every\n  row.  Then join the small mapping table back to the sentences.\n  Tools: complev() (Levenshtein), spedis() (spelling distance), soundex() boost.\n  In : cmp.df_idf, cmp.ngrams_stem, cmp.kw_norm, cmp.tfidf\n  Out: cmp.match_map, cmp.kw_hits, cmp.sim_l3\n==========================================================================*/\n%let fz_min     = 0.80;   /* minimum similarity to accept a fuzzy match     */\n%let fz_minlen  = 6;      /* never fuzzy-match very short strings (pay/day) */\n\n/*---- 1. Vocabulary (all distinct stemmed n-grams, incl. pruned ones) -----*/\nproc sql;\n  create table work.vocab as\n  select distinct ngram, n from cmp.ngrams_stem;\n\n  /*---- 2. Exact matches ---------------------------------------------------*/\n  create table work.exact as\n  select v.ngram, v.n, k.kw_id, 1 as match_q, 'EXACT' as match_type length=5\n    from work.vocab v inner join cmp.kw_norm k\n      on v.ngram = k.kw_stem and v.n = k.ngram_n;\n\n  /*---- 3. Fuzzy candidates: blocked by n-gram size and length band -------*/\n  create table work.fz_cand as\n  select v.ngram, v.n, k.kw_id, k.kw_stem,\n         complev(strip(v.ngram), strip(k.kw_stem))            as lev,\n         spedis (strip(v.ngram), strip(k.kw_stem))            as spd,\n         (soundex(compress(v.ngram)) = k.kw_sdx)              as sdx_hit,\n         max(length(v.ngram), length(k.kw_stem))              as maxlen\n    from work.vocab v inner join cmp.kw_norm k\n      on  v.n = k.ngram_n\n      and abs(length(v.ngram) - length(k.kw_stem)) <= 3\n      and length(v.ngram) >= &fz_minlen.\n      and v.ngram ne k.kw_stem;\nquit;\n\n/*---- 4. Score candidates, keep the best keyword per (ngram, kw_id) -------*/\ndata work.fuzzy;\n  set work.fz_cand;\n  length match_type $5;\n  sim_lev = 1 - lev / maxlen;\n  sim_spd = max(0, 1 - spd / 100);\n  match_q = max(sim_lev, sim_spd) + (0.05 * sdx_hit);\n  match_q = min(match_q, 0.99);                 /* a fuzzy hit never equals an exact hit */\n  match_type = 'FUZZY';\n  if match_q >= &fz_min.;\n  keep ngram n kw_id match_q match_type;\nrun;\n\ndata cmp.match_map;\n  set work.exact work.fuzzy;\nrun;\n\n/*---- 5. Row-level hits, carrying the field and section tags -------------*/\nproc sql;\n  create table cmp.kw_hits as\n  select g.complaint_id, g.field, g.sect, g.sent_no,\n         k.kw_id, k.kw_type, k.l3_id, k.trg_id, k.kw_weight,\n         m.match_type, m.match_q,\n         coalesce(d.idf, 1) as idf\n    from cmp.ngrams_stem g\n    inner join cmp.match_map m on g.ngram = m.ngram and g.n = m.n\n    inner join cmp.kw_norm   k on m.kw_id = k.kw_id\n    left  join cmp.df_idf    d on g.ngram = d.ngram and g.n = d.n;\nquit;\n\n/*---- 6. Similarity matrix: complaint vector vs. L3 keyword vector --------*/\nproc sql;\n  create table cmp.sim_l3 as\n  select t.complaint_id, t.field, k.l3_id,\n         sum(t.tfidf_norm * k.kw_weight * m.match_q)\n           / sqrt(l.kw_norm2) as cosine\n    from cmp.tfidf t\n    inner join cmp.match_map m on t.ngram = m.ngram and t.n = m.n\n    inner join cmp.kw_norm   k on m.kw_id = k.kw_id and k.kw_type = 'ROOT'\n    inner join (select l3_id, sum(kw_weight**2) as kw_norm2\n                  from cmp.kw_norm where kw_type = 'ROOT' group by l3_id) l\n      on k.l3_id = l.l3_id\n   group by t.complaint_id, t.field, k.l3_id, l.kw_norm2;\nquit;\n\nproc sql;\n  title 'Fuzzy matches accepted (audit these before trusting them)';\n  select ngram, kw_id, put(match_q, 5.2) as sim from cmp.match_map where match_type = 'FUZZY';\nquit; title;\n"}, {"file": "05_dual_field_scoring.sas", "title": "Dual-field scoring", "desc": "Weighted root-cause, trigger and emotion scoring with status logic.", "code": "/*==========================================================================\n  05  WEIGHTED DUAL-FIELD SCORING  ->  ROOT CAUSE (L1/L2/L3) + TRIGGER + EMOTION\n  hit_score = kw_weight x match_quality x idf_boost x weight_matrix(purpose, field, sect)\n    ROOT    purpose: findings UPHELD sentences dominate (1.00), customer text is a\n                     pointer (0.35), rejected (NOTUP) evidence is subtracted (-0.30)\n    TRIGGER purpose: customer text dominates (1.00), venting still counts (0.80)\n  Repeats of one keyword get diminishing returns: (1 + ln count) / count.\n  In : cmp.kw_hits, cmp.weight_matrix, cmp.sentences, cmp.df_idf, cmp.tax_*\n  Out: cmp.class_evidence, cmp.complaint_class\n==========================================================================*/\n%let min_root  = 0.40;    /* minimum root score to auto-classify            */\n%let min_conf  = 0.55;    /* top / (top + runner-up) needed to auto-classify */\n%let emo_high  = 1.50;    /* emotion index bands                            */\n%let emo_med   = 0.75;\n\nproc sql noprint;\n  select max(idf) into :idf_ref trimmed from cmp.df_idf;\nquit;\n\n/*---- 1. Weight every hit --------------------------------------------------*/\nproc sql;\n  create table work.hit_w as\n  select h.*,\n         h.kw_weight * h.match_q * (0.5 + 0.5 * min(h.idf / &idf_ref., 1)) * w.w as hit_score\n    from cmp.kw_hits h\n    inner join cmp.weight_matrix w\n       on w.purpose = h.kw_type and w.field = h.field and w.sect = h.sect;\n\n  /*---- 2. Per keyword: damp repeats, keep the D and F contributions apart -*/\n  create table cmp.class_evidence as\n  select h.complaint_id, h.kw_type, h.l3_id, h.trg_id, h.kw_id, k.keyword,\n         count(*) as cnt,\n         (1 + log(calculated cnt)) / calculated cnt\n           * sum(case when h.field = 'D' then h.hit_score else 0 end) as d_score,\n         (1 + log(calculated cnt)) / calculated cnt\n           * sum(case when h.field = 'F' then h.hit_score else 0 end) as f_score\n    from work.hit_w h inner join cmp.kw_map k on h.kw_id = k.kw_id\n   group by h.complaint_id, h.kw_type, h.l3_id, h.trg_id, h.kw_id, k.keyword;\n\n  /*---- 3. Roll up to L3 candidates and to trigger categories -------------*/\n  create table work.root as\n  select complaint_id, l3_id, sum(d_score) as d_score, sum(f_score) as f_score,\n         sum(d_score + f_score) as root_score\n    from cmp.class_evidence where kw_type = 'ROOT'\n   group by complaint_id, l3_id;\n\n  create table work.trig as\n  select complaint_id, trg_id, sum(d_score + f_score) as trg_score\n    from cmp.class_evidence where kw_type = 'TRIGGER'\n   group by complaint_id, trg_id;\n\n  create table work.emo as\n  select complaint_id, sum(trg_score) as emo_index from work.trig group by complaint_id;\n\n  /*---- 4. Investigation profile: how much did the business uphold? -------*/\n  create table work.f_profile as\n  select complaint_id,\n         sum(field = 'F' and sect = 'UPHELD') as n_up,\n         sum(field = 'F' and sect = 'NOTUP')  as n_notup,\n         sum(field = 'D' and sect = 'VENT')   as n_vent\n    from cmp.sentences group by complaint_id;\nquit;\n\n/*---- 5. Pick winners (sorted descending, first two rows per complaint) ----*/\nproc sort data=work.root; by complaint_id descending root_score; run;\ndata work.root_top;\n  set work.root; by complaint_id;\n  length top_l3 $8;\n  retain rank top_l3 top_score top_d top_f second_score;\n  if first.complaint_id then do; rank = 0; second_score = 0; end;\n  rank + 1;\n  if rank = 1 then do; top_l3 = l3_id; top_score = root_score; top_d = d_score; top_f = f_score; end;\n  else if rank = 2 then second_score = root_score;\n  if last.complaint_id then do;\n    conf = ifn(top_score > 0, top_score / (top_score + max(second_score, 0)), .);\n    output;\n  end;\n  keep complaint_id top_l3 top_score top_d top_f second_score conf;\nrun;\n\nproc sort data=work.trig; by complaint_id descending trg_score; run;\ndata work.trig_top;\n  set work.trig; by complaint_id;\n  if first.complaint_id then output;\n  keep complaint_id trg_id trg_score;\nrun;\n\n/*---- 6. Assemble the classification with status logic ---------------------*/\nproc sql;\n  create table work.assembled as\n  select c.complaint_id, r.top_l3 as l3_id, r.top_score as root_score,\n         r.top_d as root_from_customer, r.top_f as root_from_findings,\n         r.conf as root_conf, t.trg_id, t.trg_score, e.emo_index,\n         p.n_up, p.n_notup, p.n_vent\n    from cmp.complaints_raw c\n    left join work.root_top r on c.complaint_id = r.complaint_id\n    left join work.trig_top t on c.complaint_id = t.complaint_id\n    left join work.emo      e on c.complaint_id = e.complaint_id\n    left join work.f_profile p on c.complaint_id = p.complaint_id;\n\n  create table cmp.complaint_class as\n  select a.*, l3.l3_name, l2.l2_id, l2.l2_name, l1.l1_id, l1.l1_name, tr.trg_name\n    from work.assembled a\n    left join cmp.tax_l3 l3      on a.l3_id  = l3.l3_id\n    left join cmp.tax_l2 l2      on l3.l2_id = l2.l2_id\n    left join cmp.tax_l1 l1      on l2.l1_id = l1.l1_id\n    left join cmp.tax_trigger tr on a.trg_id = tr.trg_id;\nquit;\n\ndata cmp.complaint_class;\n  set cmp.complaint_class;\n  length class_status $22 emo_band $6 outcome_signal $10;\n  if      n_up > 0 and n_notup > 0 then outcome_signal = 'PARTIAL';\n  else if n_up > 0                 then outcome_signal = 'UPHELD';\n  else if n_notup > 0              then outcome_signal = 'NOT UPHELD';\n  else                                  outcome_signal = 'NONE';\n\n  if      root_score >= &min_root. and root_conf >= &min_conf. and root_from_findings > 0\n                                                   then class_status = 'CLASSIFIED';\n  else if root_score ne . and root_from_findings <= 0 and outcome_signal = 'NOT UPHELD'\n                                                   then class_status = 'ALLEGED_NOT_UPHELD';\n  else if root_score > 0 and root_from_findings <= 0\n                                                   then class_status = 'CUSTOMER_VIEW_ONLY';\n  else if root_score > 0                           then class_status = 'LOW_CONFIDENCE_REVIEW';\n  else                                                  class_status = 'UNCLASSIFIED';\n\n  emo_index = coalesce(emo_index, 0);\n  if      emo_index >= &emo_high. then emo_band = 'HIGH';\n  else if emo_index >= &emo_med.  then emo_band = 'MEDIUM';\n  else                                 emo_band = 'LOW';\nrun;\n\nproc print data=cmp.complaint_class noobs label;\n  var complaint_id l1_name l2_name l3_name root_score root_conf class_status\n      outcome_signal trg_name emo_index emo_band;\n  format root_score root_conf emo_index 5.2;\nrun;\n\n/*---- Explainability: why did complaint 1005 end up where it did? ----------*/\nproc print data=cmp.class_evidence noobs;\n  where complaint_id = 1005;\n  var kw_type keyword cnt d_score f_score;\nrun;\n"}, {"file": "06_schema_constraints.sas", "title": "Keys and constraints", "desc": "Primary/foreign keys, checks, indexes, path view and audit table.", "code": "/*==========================================================================\n  06  RELATIONAL INTEGRITY FOR THE TAXONOMY (no database server needed)\n  Base SAS datasets support primary keys, foreign keys, CHECK constraints and\n  indexes.  Run AFTER 00a-00c.  To re-seed 00a-00c later, run the RESET block\n  first (SAS will not replace a table another table's foreign key points at).\n==========================================================================*/\n\n/*---- RESET (uncomment before re-running 00a-00c) -------------------------\nproc datasets lib=cmp nolist;\n  modify kw_map;   ic delete _all_;\n  modify tax_l3;   ic delete _all_;\n  modify tax_l2;   ic delete _all_;\n  modify tax_l1;   ic delete _all_;\n  modify tax_trigger; ic delete _all_;\nquit;\n---------------------------------------------------------------------------*/\n\nproc sql;\n  /* primary keys: parents first */\n  alter table cmp.tax_l1      add constraint pk_l1  primary key (l1_id);\n  alter table cmp.tax_l2      add constraint pk_l2  primary key (l2_id);\n  alter table cmp.tax_l3      add constraint pk_l3  primary key (l3_id);\n  alter table cmp.tax_trigger add constraint pk_trg primary key (trg_id);\n  alter table cmp.kw_map      add constraint pk_kw  primary key (kw_id);\n\n  /* foreign keys: a parent cannot be deleted or re-keyed while children exist */\n  alter table cmp.tax_l2 add constraint fk_l2_l1 foreign key (l1_id)\n        references cmp.tax_l1 on delete restrict on update restrict;\n  alter table cmp.tax_l3 add constraint fk_l3_l2 foreign key (l2_id)\n        references cmp.tax_l2 on delete restrict on update restrict;\n  alter table cmp.kw_map add constraint fk_kw_l3 foreign key (l3_id)\n        references cmp.tax_l3 on delete restrict on update restrict;\n  alter table cmp.kw_map add constraint fk_kw_trg foreign key (trg_id)\n        references cmp.tax_trigger on delete restrict on update restrict;\n\n  /* business rules */\n  alter table cmp.kw_map add constraint ck_kw_type\n        check (kw_type in ('ROOT', 'TRIGGER'));\n  alter table cmp.kw_map add constraint ck_kw_parent   /* exactly one parent, matching the type */\n        check ((kw_type = 'ROOT'    and l3_id  is not missing and trg_id is missing)\n            or (kw_type = 'TRIGGER' and trg_id is not missing and l3_id  is missing));\n  alter table cmp.kw_map add constraint ck_kw_weight check (kw_weight between 0 and 1);\nquit;\n/* NOTE: if your SAS release rejects missing values in the two nullable foreign\n   keys on kw_map, drop fk_kw_l3/fk_kw_trg; ck_kw_parent plus the orphan check\n   in 00b still guarantee referential integrity. */\n\n/*---- Indexes for the lookups the pipeline repeats -----------------------*/\nproc datasets lib=cmp nolist;\n  modify kw_map;    index create kw_type;  index create l3_id;\n  modify tax_l3;    index create l2_id;\n  modify tax_l2;    index create l1_id;\nquit;\n\n/*---- One flat path view for reporting: L1 > L2 > L3 ----------------------*/\nproc sql;\n  create view cmp.v_taxonomy_path as\n  select l3.l3_id, l3.l3_name, l2.l2_id, l2.l2_name, l1.l1_id, l1.l1_name,\n         catx(' > ', l1.l1_name, l2.l2_name, l3.l3_name) as full_path length=160\n    from cmp.tax_l3 l3\n    inner join cmp.tax_l2 l2 on l3.l2_id = l2.l2_id\n    inner join cmp.tax_l1 l1 on l2.l1_id = l1.l1_id\n   where l3.active_flag = 1 and l2.active_flag = 1 and l1.active_flag = 1;\nquit;\n\n/*---- Change control: append-only audit of keyword edits ------------------*/\nproc sql;\n  create table cmp.kw_audit\n   (audit_id num, kw_id num, action char(8), old_value char(60), new_value char(60),\n    changed_by char(32), changed_dttm num format=datetime20., reason char(120));\nquit;\n"}];
+/* ===== app1.js : utilities + Learn tab ===== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const f2 = x => (x == null || isNaN(x) ? '-' : x.toFixed(2));
+const COPY = {}; let copyN = 0;
+
+function sasHtml(code) {
+  const re = /(\/\*[\s\S]*?\*\/)|('[^'\n]*'|"[^"\n]*")|\b(data|run|proc|quit|set|merge|by|if|then|else|do|end|output|retain|length|keep|drop|declare|hash|select|from|where|group|order|create|table|left|inner|join|on|as|into|having|input|infile|datalines|format|array|call|function|endsub|return|options|libname|let|macro|mend|put|sort|print|freq|sql|fcmp|leave|continue|and|or|not|in|alter|add|constraint|primary|key|foreign|references|check|view|modify|index|datasets|distinct|count|sum|min|max|avg|case|when|end)\b/gi;
+  return esc(code).replace(re, (m, c, s, k) => c ? '<span class="sas-c">' + c + '</span>' : s ? '<span class="sas-s">' + s + '</span>' : '<span class="sas-k">' + m + '</span>');
+}
+function codeBlock(code, label) {
+  const id = 'c' + (++copyN); COPY[id] = code;
+  return '<div class="codewrap"><button class="copy" data-copy="' + id + '">' + (label || 'Copy') + '</button><pre>' + sasHtml(code) + '</pre></div>';
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg || 'Copied'; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 1400); }
+function copyText(txt) {
+  const done = () => toast('Copied to clipboard');
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(done, () => fallback());
+  else fallback();
+  function fallback() { const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = 0; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { toast('Copy failed - select and copy manually'); } ta.remove(); }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-copy]');
+  if (b) copyText(COPY[b.dataset.copy]);
+});
+const chip = s => '<span class="chip c-' + s + '">' + s + '</span>';
+const chipT = (c, t) => '<span class="chip c-' + c + '">' + t + '</span>';
+const SAMPLES = DATA.complaints_raw;
+
+/* ---------- tabs ---------- */
+const TABS = {};
+function showTab(name) {
+  $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  $$('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + name));
+  if (!TABS[name].done) { TABS[name].init(); TABS[name].done = true; }
+  else if (TABS[name].show) TABS[name].show();
+}
+$('#nav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
+
+/* ---------- LEARN ---------- */
+function sampleSelect(id) {
+  return '<select id="' + id + '">' + SAMPLES.map(c => '<option value="' + c.complaint_id + '">Complaint ' + c.complaint_id + ' - ' + esc(c.description.slice(0, 48)) + '...</option>').join('') + '</select>';
+}
+function quiz(q) {
+  const id = 'q' + Math.random().toString(36).slice(2, 7);
+  setTimeout(() => {
+    const box = document.getElementById(id); if (!box) return;
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button[data-i]'); if (!b) return;
+      const ok = +b.dataset.i === q.answer;
+      $('.fb', box).innerHTML = '<div class="note ' + (ok ? 'good' : '') + '"><b>' + (ok ? 'Correct. ' : 'Not quite. ') + '</b>' + q.why + '</div>';
+    });
+  });
+  return '<div class="card" id="' + id + '"><label>Check yourself</label><p style="margin:2px 0 8px"><b>' + q.q + '</b></p>' +
+    q.options.map((o, i) => '<button class="btn alt" style="margin:0 6px 6px 0" data-i="' + i + '">' + o + '</button>').join('') + '<div class="fb"></div></div>';
+}
+
+const LESSONS = [
+  { title: 'Two voices, one problem',
+    body: () => `<p class="lead">Every complaint has two authors. The <b>customer</b> writes <code>description</code>: what they felt and why they were driven to complain. The <b>business</b> writes <code>findings_of_investigation</code>: what actually happened and what was upheld or rejected. A good classifier weighs them differently for different questions.</p>
+      <div class="card"><label>Pick a complaint</label>${sampleSelect('l1sel')}<div class="grid2" style="margin-top:12px"><div><label>Description (customer)</label><div id="l1d"></div></div><div><label>Findings (business)</label><div id="l1f"></div></div></div></div>
+      <div class="grid3"><div class="kpi"><b>Why did they complain?</b><div>Trigger</div><small>Best read from the customer's words</small></div><div class="kpi"><b>What went wrong?</b><div>Root cause</div><small>Best read from upheld findings</small></div><div class="kpi"><b>Did we agree?</b><div>Outcome</div><small>Upheld and not-upheld aspects both matter</small></div></div>`,
+    init() { const upd = () => { const c = SAMPLES.find(x => x.complaint_id == $('#l1sel').value); $('#l1d').textContent = c.description; $('#l1f').textContent = c.findings_of_investigation; }; $('#l1sel').onchange = upd; upd(); },
+    quiz: { q: 'Which field should carry the most weight when deciding the ROOT CAUSE?', options: ['Description', 'Upheld parts of the findings', 'Whichever is longer'], answer: 1, why: 'The business only upholds what it can evidence. The customer text is a pointer; the upheld findings are the confirmation.' } },
+  { title: 'Segment and tag sentences',
+    body: () => `<p class="lead">Before counting any word, split each field into sentences and tag each sentence. Handler notes (ADMIN) are dropped. Short pure venting (VENT) is kept for emotion but not for causes. Rejected aspects (NOTUP) become negative evidence.</p>
+      <div class="card"><label>Pick a complaint</label>${sampleSelect('l2sel')}<h3>Description</h3><div id="l2d"></div><h3>Findings</h3><div id="l2f"></div></div>
+      <div class="note">Order matters: <code>not upheld</code> contains the word <code>upheld</code>, so NOTUP is tested before UPHELD.</div>
+      <h3>The SAS behind it</h3>${codeBlock(`re_notup = prxparse('/\\b(not upheld|no evidence|did not find|acted (correctly|professionally))\\b/i');
+re_up    = prxparse('/\\b(upheld|we agree|our error|should have|failed because)\\b/i');
+...
+if      prxmatch(re_admin, sent_text) and not prxmatch(re_up, sent_text) then sect = 'ADMIN';
+else if prxmatch(re_notup, sent_text) then sect = 'NOTUP';   /* before UPHELD */
+else if prxmatch(re_up,    sent_text) then sect = 'UPHELD';
+else sect = 'NEUTRAL';`)}`,
+    init() { const upd = () => { const c = SAMPLES.find(x => x.complaint_id == $('#l2sel').value);
+        const draw = (t, fld) => CMP.segment(t, fld).map(s => '<div class="sent">' + chip(s.sect) + esc(s.text) + '.</div>').join('');
+        $('#l2d').innerHTML = draw(c.description, 'D'); $('#l2f').innerHTML = draw(c.findings_of_investigation, 'F'); };
+      $('#l2sel').onchange = upd; upd(); },
+    quiz: { q: '"Email sent to the customer explaining the outcome." Which tag fits?', options: ['UPHELD', 'ADMIN', 'VENT'], answer: 1, why: 'It describes case handling, not what went wrong, so it is excluded from the vocabulary.' } },
+  { title: 'Tokens and n-grams',
+    body: () => `<p class="lead">Lower-case, strip punctuation, remove stopwords, then slide a window over what is left to make unigrams, bigrams and trigrams. Phrases like <code>standing order fail</code> carry more meaning than single words. Negations ("not", "no") are deliberately kept.</p>
+      <div class="card"><label>Sentence</label><textarea id="l3in" style="min-height:70px">The standing order failed because of a system error during the batch run.</textarea>
+      <div class="inline-row" style="margin-top:8px"><div><label>N-gram size</label><select id="l3n"><option>1</option><option selected>2</option><option>3</option></select></div><div><label>Normalise</label><select id="l3s"><option value="0">Raw tokens</option><option value="1" selected>Lemma + stem</option></select></div></div><div id="l3out" style="margin-top:10px"></div></div>
+      ${codeBlock(`do n = 1 to 3;
+  do i = 1 to k - n + 1;
+    ngram = kw{i};
+    do j = 1 to n - 1;
+      ngram = catx(' ', ngram, kw{i + j});
+    end;
+    output;
+  end;
+end;`)}`,
+    init() { const upd = () => { const toks = CMP.tokens($('#l3in').value, $('#l3s').value === '1'); const n = +$('#l3n').value;
+        const g = CMP.ngrams(toks, n).filter(x => x.n === n);
+        $('#l3out').innerHTML = '<label>After stopword removal (' + toks.length + ' tokens)</label>' + toks.map(t => '<span class="tok">' + esc(t) + '</span>').join('') +
+          '<div style="margin-top:8px"><label>' + n + '-grams (' + g.length + ')</label>' + g.map(x => '<span class="tok hit">' + esc(x.ngram) + '</span>').join('') + '</div>'; };
+      ['input', 'change'].forEach(ev => $$('#l3in,#l3n,#l3s').forEach(el => el.addEventListener(ev, upd))); upd(); },
+    quiz: { q: 'Why keep "not" as a token?', options: ['It is rare', 'So "not made clear" is not confused with "made clear"', 'SAS requires it'], answer: 1, why: 'Dropping negations would make a rejected claim look identical to a confirmed one.' } },
+  { title: 'Stemming, lemmas and phonetics',
+    body: () => `<p class="lead">"Charged", "charges" and "charging" should count as one term. Irregular forms ("paid", "told") go through a lookup table first (the lemma approximation), then a regex suffix stripper (<code>prxchange</code>) handles the rest. <code>soundex()</code> adds a sound-alike key used later as a fuzzy-match booster.</p>
+      <div class="card"><label>Words (space separated)</label><input type="text" id="l4in" value="charged charges charging paid told delays delayed payments processed queries vulnerability decison"><div id="l4out" style="margin-top:10px"></div></div>
+      ${codeBlock(`s = prxchange('s/sses$/ss/', 1, s);
+if lengthn(s) > 4 then s = prxchange('s/ies$/y/', 1, s);
+if prxmatch('/[^s]s$/', s) then s = substr(s, 1, lengthn(s) - 1);
+if prxmatch('/(ing|ed)$/', s) then do;
+  t = prxchange('s/(ing|ed)$//', 1, s);
+  if lengthn(t) >= 3 and prxmatch('/[aeiouy]/', t) then
+    s = prxchange('s/([^aeioulsz])\\1$/$1/', 1, t);
+end;`)}
+      <div class="note">A stemmer produces stems, not dictionary words (<code>charg</code>). That is fine: complaint text and keywords are both stemmed the same way, so they still meet.</div>`,
+    init() { const upd = () => { const ws = $('#l4in').value.toLowerCase().split(/\s+/).filter(Boolean);
+        $('#l4out').innerHTML = '<table><tr><th>Word</th><th>Lemma</th><th>Stem</th><th>Soundex</th></tr>' + ws.map(w => { const lem = DATA.lemma_map[w] || w; const st = CMP.stemw(lem);
+          return '<tr><td class="mono">' + esc(w) + '</td><td class="mono">' + (DATA.lemma_map[w] ? esc(lem) : '<span style="color:var(--muted)">-</span>') + '</td><td class="mono"><b>' + esc(st) + '</b></td><td class="mono">' + CMP.soundex(st) + '</td></tr>'; }).join('') + '</table>'; };
+      $('#l4in').oninput = upd; upd(); },
+    quiz: { q: 'Why does "paid" need a lemma map?', options: ['Regex cannot turn "paid" into "pay"', 'It is a stopword', 'It is too short'], answer: 0, why: 'Suffix stripping only removes endings. Irregular forms need a lookup.' } },
+  { title: 'TF-IDF: which terms matter',
+    body: () => `<p class="lead"><b>Term frequency</b> rewards words used in this complaint. <b>Inverse document frequency</b> down-weights words that appear in every complaint. Multiplying them highlights distinctive terms. Here the corpus is the 8 sample complaints; in production it is your full 25k rows.</p>
+      <div class="card"><label>Pick a complaint</label>${sampleSelect('l5sel')}<div id="l5out" style="margin-top:10px"></div></div>
+      <div class="note">Formula used: <code>tf = 1 + ln(count)</code>, <code>idf = ln((1+N)/(1+df)) + 1</code>, then each complaint vector is L2-normalised so cosine similarity works.</div>
+      ${codeBlock(`create table cmp.df_idf as
+select ngram, n, count(distinct complaint_id) as df,
+       log((1 + &ndocs.) / (1 + count(distinct complaint_id))) + 1 as idf
+  from cmp.ngrams_stem group by ngram, n
+having calculated df >= &min_df.;`)}`,
+    init() { const prep = CMP.prepare(SAMPLES), stats = CMP.corpusStats(prep);
+      const upd = () => { const id = +$('#l5sel').value; const p = prep.find(x => x.complaint_id === id); const tf = {};
+        p.sents.forEach(s => s.ngrams.forEach(g => { if (g.n > 2) return; const k = g.n + '|' + g.ngram; tf[k] = (tf[k] || 0) + 1; }));
+        const rows = Object.keys(tf).map(k => { const idf = stats.idf[k]; const w = (1 + Math.log(tf[k])) * idf; return { k: k.split('|')[1], n: +k.split('|')[0], tf: tf[k], df: stats.df[k], idf, w }; }).sort((a, b) => b.w - a.w).slice(0, 12);
+        const mx = rows[0] ? rows[0].w : 1;
+        $('#l5out').innerHTML = '<table><tr><th>Term (stemmed)</th><th class="num">tf</th><th class="num">df</th><th class="num">idf</th><th class="num">tf-idf</th><th style="width:30%"></th></tr>' + rows.map(r =>
+          '<tr><td class="mono">' + esc(r.k) + '</td><td class="num">' + r.tf + '</td><td class="num">' + r.df + '/' + stats.N + '</td><td class="num">' + f2(r.idf) + '</td><td class="num">' + f2(r.w) + '</td><td><div style="height:9px;border-radius:5px;background:var(--teal);width:' + (r.w / mx * 100) + '%"></div></td></tr>').join('') + '</table>'; };
+      $('#l5sel').onchange = upd; upd(); },
+    quiz: { q: 'A term appears in 90% of complaints. Its IDF will be...', options: ['High', 'Low', 'Zero always'], answer: 1, why: 'Common terms carry little information about any single complaint, so IDF shrinks them.' } },
+  { title: 'Fuzzy matching against the taxonomy',
+    body: () => `<p class="lead">Exact matching misses typos ("decison") and variants. Instead of comparing every row, the SAS code compares the <b>vocabulary</b> once against the keyword list using <code>complev()</code> (edit distance), <code>spedis()</code> (spelling distance) and a <code>soundex()</code> boost, then keeps matches above a threshold.</p>
+      <div class="card"><div class="inline-row"><div style="flex:3"><label>Phrase as it appears in a complaint (stemmed n-gram)</label><input type="text" id="l6in" value="await decison"></div><div><label>Minimum similarity: <b id="l6v">0.80</b></label><input type="range" id="l6t" min="0.5" max="1" step="0.01" value="0.80"></div></div><div id="l6out" style="margin-top:10px"></div></div>
+      <div class="note">Guards used: same n-gram size, length within 3, and no fuzzy matching below 6 characters, so "pay" never becomes "day".</div>
+      ${codeBlock(`sim_lev  = 1 - lev / maxlen;
+sim_spd  = max(0, 1 - spd / 100);
+match_q  = min(max(sim_lev, sim_spd) + 0.05 * sdx_hit, 0.99);
+if match_q >= &fz_min.;`)}`,
+    init() { const upd = () => { const raw = $('#l6in').value.toLowerCase().trim().split(/\s+/).filter(Boolean).map(w => CMP.stemw(DATA.lemma_map[w] || w)); const v = raw.join(' '), n = raw.length, th = +$('#l6t').value; $('#l6v').textContent = th.toFixed(2);
+        const rows = CMP.KW.filter(k => k.ngram_n === n).map(k => { const lev = CMP.complev(v, k.kw_stem), spd = CMP.spedis(v, k.kw_stem), mx = Math.max(v.length, k.kw_stem.length);
+          let q = Math.max(1 - lev / mx, Math.max(0, 1 - spd / 100)); const sd = CMP.soundex(v.replace(/ /g, '')) === k.kw_sdx; if (sd) q += .05; q = v === k.kw_stem ? 1 : Math.min(q, .99); return { k, lev, spd, sd, q }; }).sort((a, b) => b.q - a.q).slice(0, 6);
+        $('#l6out').innerHTML = '<div style="margin-bottom:6px">Normalised phrase: <span class="tok hit">' + esc(v) + '</span> (' + n + '-gram)</div><table><tr><th>Keyword (stem)</th><th class="num">complev</th><th class="num">spedis</th><th>soundex</th><th class="num">similarity</th><th>Result</th></tr>' + rows.map(r =>
+          '<tr><td class="mono">' + esc(r.k.kw_stem) + '</td><td class="num">' + r.lev + '</td><td class="num">' + r.spd.toFixed(0) + '</td><td>' + (r.sd ? 'match' : '-') + '</td><td class="num">' + f2(r.q) + '</td><td>' + (r.q >= th ? (r.q === 1 ? chipT('UPHELD', 'EXACT') : chipT('CUST', 'FUZZY MATCH')) : chipT('NEUTRAL', 'below threshold')) + '</td></tr>').join('') + '</table>'; };
+      $$('#l6in,#l6t').forEach(el => el.addEventListener('input', upd)); upd(); },
+    quiz: { q: 'Why match the vocabulary instead of every row?', options: ['Rows are case-sensitive', 'Distinct n-grams are far fewer than rows, so it is much faster', 'complev cannot read rows'], answer: 1, why: 'Compare each distinct n-gram to each keyword once, store the mapping, then join it back to the rows.' } },
+  { title: 'Dual-field weighted scoring',
+    body: () => `<p class="lead">Every keyword hit is multiplied by a weight that depends on <b>purpose</b> (root cause or trigger), <b>field</b> and <b>section</b>. Upheld findings dominate root cause; customer words dominate the trigger; rejected aspects subtract.</p>
+      <div class="card"><table><tr><th>Section</th><th class="num">Root cause</th><th class="num">Trigger</th></tr>${[['D', 'CUST'], ['D', 'VENT'], ['F', 'UPHELD'], ['F', 'NEUTRAL'], ['F', 'NOTUP'], ['F', 'ADMIN']].map(([f, s]) => { const g = p => DATA.weight_matrix.find(r => r.purpose === p && r.field === f && r.sect === s).w; return '<tr><td>' + chip(s) + (f === 'D' ? 'customer' : 'findings') + '</td><td class="num">' + g('ROOT').toFixed(2) + '</td><td class="num">' + g('TRIGGER').toFixed(2) + '</td></tr>'; }).join('')}</table></div>
+      <div class="note good"><code>hit = kw_weight x match_quality x idf_boost x W(purpose, field, section)</code><br>Repeats damp down: <code>(1 + ln count) / count</code>. Status needs a minimum score, a top-vs-runner-up confidence <b>and</b> support from the findings.</div>
+      <button class="btn" onclick="showTab('sandbox')">Try it in the weighting sandbox</button>`,
+    init() {},
+    quiz: { q: 'Customer says "no warning" but findings say the warning "was appropriate". Net effect on that root cause?', options: ['Strongly positive', 'Reduced or negative', 'No effect'], answer: 1, why: 'The customer mention adds a little; the NOTUP sentence subtracts more, so the case ends up ALLEGED_NOT_UPHELD.' } }
+];
+
+TABS.learn = { init() {
+  const root = $('#tab-learn');
+  root.innerHTML = '<a class="linkcard" href="prev_workbench.html"><div><b>Previous workbench</b><small>Open the earlier version of the workbench (prev_workbench.html, in the same folder).</small></div><span>Open &rarr;</span></a><h2>Interactive tutorials</h2><p class="lead">Seven short lessons. Each has a live demo you can type into, the SAS behind it, and a quick check.</p><div class="lessons"><div class="lnav" id="lnav"></div><div id="lbody"></div></div>';
+  $('#lnav').innerHTML = LESSONS.map((l, i) => '<button data-i="' + i + '"><span>' + (i + 1) + '</span>' + esc(l.title) + '</button>').join('');
+  const open = i => { $$('#lnav button').forEach(b => b.classList.toggle('on', +b.dataset.i === i)); const L = LESSONS[i];
+    $('#lbody').innerHTML = '<h2>' + (i + 1) + '. ' + esc(L.title) + '</h2>' + L.body() + quiz(L.quiz); L.init(); };
+  $('#lnav').addEventListener('click', e => { const b = e.target.closest('button'); if (b) open(+b.dataset.i); });
+  open(0);
+} };
+
+/* ===== app2.js : dual-field weighting sandbox ===== */
+const SB = { w: null, timer: null };
+const SB_ROWS = [
+  ['ROOT', 'D', 'CUST', 'Root cause: customer description (factual)'], ['ROOT', 'D', 'VENT', 'Root cause: customer venting'],
+  ['ROOT', 'F', 'UPHELD', 'Root cause: findings, UPHELD'], ['ROOT', 'F', 'NEUTRAL', 'Root cause: findings, neutral'],
+  ['ROOT', 'F', 'NOTUP', 'Root cause: findings, NOT upheld'],
+  ['TRIGGER', 'D', 'CUST', 'Trigger: customer description (factual)'], ['TRIGGER', 'D', 'VENT', 'Trigger: customer venting'],
+  ['TRIGGER', 'F', 'UPHELD', 'Trigger: findings, UPHELD'], ['TRIGGER', 'F', 'NEUTRAL', 'Trigger: findings, neutral']
+];
+const sbKey = (p, f, s) => p + '-' + f + '-' + s;
+
+function sbWeights() {
+  const out = DATA.weight_matrix.map(r => ({ purpose: r.purpose, field: r.field, sect: r.sect, w: r.w }));
+  SB_ROWS.forEach(([p, f, s]) => { const el = $('#' + sbKey(p, f, s)); const r = out.find(x => x.purpose === p && x.field === f && x.sect === s); if (el && r) r.w = +el.value; });
+  return out;
+}
+function sbBars(rows, nameOf, cap) {
+  rows = rows.slice(0, cap);
+  if (!rows.length) return '<p class="lead" style="margin:0">No taxonomy keywords found in this text.</p>';
+  let maxP = 0, minN = 0;
+  const parts = rows.map(r => { let pos = 0, neg = 0; const segs = [];
+    [['d', r.d], ['f', r.f]].forEach(([k, v]) => { if (v >= 0) { segs.push({ c: k, l: pos, w: v }); pos += v; } else { segs.push({ c: 'neg', l: neg + v, w: -v }); neg += v; } });
+    maxP = Math.max(maxP, pos); minN = Math.min(minN, neg); return segs; });
+  const range = (maxP - minN) || 1;
+  return rows.map((r, i) => '<div class="bar"><div class="nm" title="' + esc(nameOf(r)) + '">' + esc(nameOf(r)) + '</div><div class="track"><div class="mid" style="left:' + (-minN / range * 100) + '%"></div>' +
+    parts[i].map(s => '<div class="seg ' + s.c + '" style="left:' + ((s.l - minN) / range * 100) + '%;width:' + (s.w / range * 100) + '%"></div>').join('') + '</div><div class="val">' + f2(r.total) + '</div></div>').join('');
+}
+
+function sbRun() {
+  const d = $('#sb-d').value, f = $('#sb-f').value, pid = $('#sb-pre').value;
+  const opts = { weights: sbWeights(), min_root: +$('#sb-minroot').value, min_conf: +$('#sb-minconf').value, fuzzy: $('#sb-fuzzy').checked, fz_min: +$('#sb-fz').value };
+  const others = SAMPLES.filter(c => String(c.complaint_id) !== pid);
+  const { results } = CMP.analyse(others.concat([{ complaint_id: 0, description: d, findings_of_investigation: f }]), opts);
+  const r = results.find(x => x.complaint_id === 0);
+  const segHtml = r.sents.map(s => '<div class="sent">' + chip(s.sect) + '<small style="color:var(--muted)">' + (s.field === 'D' ? 'customer' : 'findings') + '</small> ' + esc(s.text) + '.</div>').join('') || '<p class="lead">Type some text on the left.</p>';
+  const name = x => CMP.L3[x.id].l3_id + '  ' + CMP.L3[x.id].l3_name;
+  const tname = x => x.id + '  ' + CMP.TRG[x.id].trg_name;
+  const ev = r.evidence.slice().sort((a, b) => Math.abs(b.d_score + b.f_score) - Math.abs(a.d_score + a.f_score));
+  $('#sb-out').innerHTML =
+    '<div class="result"><div class="kpi"><b>Root cause (L1 > L2 > L3)</b><div style="font-size:15px">' + (r.l3_name ? esc(r.l1_name) + ' > ' + esc(r.l2_name) + ' > <span style="color:var(--teal)">' + esc(r.l3_name) + '</span>' : '-') + '</div></div>' +
+    '<div class="kpi"><b>Status</b><div class="st-' + r.status + '">' + r.status.replace(/_/g, ' ') + '</div><small>score ' + f2(r.root_score) + ' | confidence ' + f2(r.root_conf) + ' | outcome ' + r.outcome_signal + '</small></div>' +
+    '<div class="kpi"><b>Trigger and emotion</b><div>' + esc(r.trg_name || '-') + '</div><small>emotion index ' + f2(r.emo_index) + ' (' + r.emo_band + ')</small></div></div>' +
+    '<div class="grid2" style="margin-top:14px"><div class="card"><label>Root-cause candidates</label><div class="legend" style="margin:4px 0 8px"><span><i style="background:var(--blue)"></i>customer text</span><span><i style="background:var(--teal)"></i>findings</span><span><i style="background:var(--red)"></i>negative (rejected)</span></div>' + sbBars(r.roots, name, 6) + '</div>' +
+    '<div class="card"><label>Trigger categories (why they complained)</label><div style="height:24px"></div>' + sbBars(r.trigs, tname, 5) + '</div></div>' +
+    '<div class="card"><label>How the text was read</label>' + segHtml + '</div>' +
+    '<div class="card"><label>Evidence (keyword hits)</label>' + (ev.length ? '<table><tr><th>Keyword</th><th>Type</th><th>Match</th><th class="num">Count</th><th class="num">Customer</th><th class="num">Findings</th></tr>' +
+      ev.map(e => '<tr><td>' + esc(e.keyword) + '</td><td>' + (e.kw_type === 'ROOT' ? e.l3_id : e.trg_id) + '</td><td>' + e.match_type + '</td><td class="num">' + e.cnt + '</td><td class="num">' + f2(e.d_score) + '</td><td class="num">' + f2(e.f_score) + '</td></tr>').join('') + '</table>' : '<p class="lead" style="margin:0">No hits.</p>') + '</div>';
+}
+function sbSchedule() { clearTimeout(SB.timer); SB.timer = setTimeout(sbRun, 120); }
+function sbLabels() { SB_ROWS.forEach(([p, f, s]) => { const el = $('#' + sbKey(p, f, s)); $('#v-' + sbKey(p, f, s)).textContent = (+el.value).toFixed(2); }); $('#v-minroot').textContent = (+$('#sb-minroot').value).toFixed(2); $('#v-minconf').textContent = (+$('#sb-minconf').value).toFixed(2); $('#v-fz').textContent = (+$('#sb-fz').value).toFixed(2); }
+function sbWeightSas() {
+  const rows = sbWeights().map(r => { const o = DATA.weight_matrix.find(x => x.purpose === r.purpose && x.field === r.field && x.sect === r.sect); return [r.purpose, r.field, r.sect, r.w.toFixed(2), o.rationale].join('|'); });
+  return 'data cmp.weight_matrix;\n  length purpose $7 field $1 sect $7 w 8 rationale $70;\n  infile datalines dlm=\'|\' truncover;\n  input purpose $ field $ sect $ w rationale $;\n  datalines;\n' + rows.join('\n') + '\n;\nrun;\n\n%let min_root = ' + (+$('#sb-minroot').value).toFixed(2) + ';\n%let min_conf = ' + (+$('#sb-minconf').value).toFixed(2) + ';\n%let fz_min   = ' + (+$('#sb-fz').value).toFixed(2) + ';';
+}
+
+TABS.sandbox = { init() {
+  const root = $('#tab-sandbox');
+  root.innerHTML = '<h2>Dual-field weighting sandbox</h2><p class="lead">Edit either text, or move the weights, and watch the classification change. The same numbers live in <code>cmp.weight_matrix</code> in SAS; copy them out when you are happy.</p>' +
+    '<div class="grid2"><div class="card"><div class="inline-row" style="margin-bottom:8px"><div><label>Load a sample</label><select id="sb-pre">' + SAMPLES.map(c => '<option value="' + c.complaint_id + '">' + c.complaint_id + ' - ' + esc(c.description.slice(0, 40)) + '...</option>').join('') + '<option value="custom">Blank (write your own)</option></select></div></div>' +
+    '<label>description (customer)</label><textarea id="sb-d"></textarea><label style="margin-top:10px">findings_of_investigation (business)</label><textarea id="sb-f"></textarea></div>' +
+    '<div class="card"><label>Weights</label><div class="sliders">' + SB_ROWS.map(([p, f, s, t]) => { const w = DATA.weight_matrix.find(r => r.purpose === p && r.field === f && r.sect === s).w;
+      return '<div><div class="srow"><small>' + t + '</small><b class="mono" id="v-' + sbKey(p, f, s) + '"></b></div><input type="range" id="' + sbKey(p, f, s) + '" min="-1" max="1.2" step="0.05" value="' + w + '"></div>'; }).join('') + '</div>' +
+    '<div class="sliders" style="margin-top:10px"><div><div class="srow"><small>Min root score</small><b class="mono" id="v-minroot"></b></div><input type="range" id="sb-minroot" min="0" max="2" step="0.05" value="0.40"></div>' +
+    '<div><div class="srow"><small>Min confidence</small><b class="mono" id="v-minconf"></b></div><input type="range" id="sb-minconf" min="0.5" max="1" step="0.01" value="0.55"></div>' +
+    '<div><div class="srow"><small>Fuzzy threshold</small><b class="mono" id="v-fz"></b></div><input type="range" id="sb-fz" min="0.6" max="1" step="0.01" value="0.80"></div>' +
+    '<div style="align-self:end"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="sb-fuzzy" checked> Fuzzy matching on</label></div></div>' +
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn alt" id="sb-reset">Reset weights</button><button class="btn" id="sb-copy">Copy as SAS (weight_matrix)</button></div></div></div><div id="sb-out"></div>';
+  const load = () => { const v = $('#sb-pre').value; if (v === 'custom') { $('#sb-d').value = ''; $('#sb-f').value = ''; } else { const c = SAMPLES.find(x => String(x.complaint_id) === v); $('#sb-d').value = c.description; $('#sb-f').value = c.findings_of_investigation; } sbRun(); };
+  $('#sb-pre').onchange = load;
+  $$('#tab-sandbox textarea, #tab-sandbox input').forEach(el => el.addEventListener('input', () => { sbLabels(); sbSchedule(); }));
+  $('#sb-reset').onclick = () => { SB_ROWS.forEach(([p, f, s]) => { $('#' + sbKey(p, f, s)).value = DATA.weight_matrix.find(r => r.purpose === p && r.field === f && r.sect === s).w; }); $('#sb-minroot').value = .4; $('#sb-minconf').value = .55; $('#sb-fz').value = .8; sbLabels(); sbRun(); };
+  $('#sb-copy').onclick = () => copyText(sbWeightSas());
+  sbLabels(); load();
+} };
+
+/* ===== app3.js : taxonomy explorer, tool builder, code library ===== */
+
+/* ---------- TAXONOMY EXPLORER ---------- */
+const ENT = [
+  { n: 'tax_l1', f: [['pk', 'l1_id'], ['', 'l1_name'], ['', 'l1_desc'], ['', 'active_flag'], ['', 'valid_from / valid_to']] },
+  { n: 'tax_l2', f: [['pk', 'l2_id'], ['fk', 'l1_id'], ['', 'l2_name'], ['', 'active_flag']] },
+  { n: 'tax_l3', f: [['pk', 'l3_id'], ['fk', 'l2_id'], ['', 'l3_name'], ['', 'l3_def'], ['', 'active_flag']] },
+  { n: 'kw_map', f: [['pk', 'kw_id'], ['', 'kw_type ROOT|TRIGGER'], ['fk', 'l3_id  (ROOT)'], ['fk', 'trg_id (TRIGGER)'], ['', 'keyword'], ['', 'kw_weight'], ['', 'source']] },
+  { n: 'tax_trigger', f: [['pk', 'trg_id'], ['', 'trg_name'], ['', 'trg_def']] },
+  { n: 'weight_matrix', f: [['pk', 'purpose'], ['pk', 'field'], ['pk', 'sect'], ['', 'w'], ['', 'rationale']] }
+];
+const entHtml = e => '<div class="ent"><h4>' + e.n + '</h4>' + e.f.map(([k, t]) => '<div class="' + k + '">' + (k ? k.toUpperCase() + ' ' : '&nbsp;&nbsp;&nbsp;') + t + '</div>').join('') + '</div>';
+
+function txDetail(kind, id) {
+  const kwOf = l3 => DATA.kw_map.filter(k => k.l3_id === l3).map(k => CMP.KW.find(x => x.kw_id === k.kw_id) || Object.assign({ kw_stem: '(collapsed)' }, k));
+  if (kind === 'l1') { const l1 = CMP.L1[id]; const l2s = DATA.tax_l2.filter(x => x.l1_id === id); const l3s = DATA.tax_l3.filter(x => l2s.some(y => y.l2_id === x.l2_id));
+    return '<h3 style="margin-top:0">' + esc(l1.l1_name) + ' <span class="chip c-CUST">' + id + '</span></h3><p>' + esc(l1.l1_desc) + '</p><div class="grid3"><div class="kpi"><b>Level 2 nodes</b><div>' + l2s.length + '</div></div><div class="kpi"><b>Level 3 root causes</b><div>' + l3s.length + '</div></div><div class="kpi"><b>Keywords</b><div>' + DATA.kw_map.filter(k => l3s.some(x => x.l3_id === k.l3_id)).length + '</div></div></div>'; }
+  if (kind === 'l2') { const l2 = CMP.L2[id]; return '<h3 style="margin-top:0">' + esc(l2.l2_name) + ' <span class="chip c-CUST">' + id + '</span></h3><p>Parent (FK l1_id): <b>' + esc(CMP.L1[l2.l1_id].l1_name) + '</b></p><table><tr><th>L3</th><th>Root cause</th><th>Definition</th></tr>' + DATA.tax_l3.filter(x => x.l2_id === id).map(x => '<tr><td class="mono">' + x.l3_id + '</td><td>' + esc(x.l3_name) + '</td><td>' + esc(x.l3_def) + '</td></tr>').join('') + '</table>'; }
+  const l3 = CMP.L3[id], l2 = CMP.L2[l3.l2_id], l1 = CMP.L1[l2.l1_id];
+  return '<h3 style="margin-top:0">' + esc(l3.l3_name) + ' <span class="chip c-CUST">' + id + '</span></h3><p>' + esc(l3.l3_def) + '</p><p class="mono" style="color:var(--muted)">' + esc(l1.l1_name + ' > ' + l2.l2_name + ' > ' + l3.l3_name) + '</p>' +
+    '<label>Keywords mapped here (raw phrase becomes stem through the same pipeline)</label><table><tr><th>Keyword</th><th>Normalised stem</th><th class="num">n</th><th class="num">weight</th></tr>' +
+    kwOf(id).map(k => '<tr><td>' + esc(k.keyword) + '</td><td class="mono">' + esc(k.kw_stem) + '</td><td class="num">' + (k.ngram_n || '-') + '</td><td class="num">' + k.kw_weight + '</td></tr>').join('') + '</table>' +
+    codeBlock("/* the taxonomy row */\n" + [DATA.tax_l3.find(x => x.l3_id === id)].map(x => [x.l3_id, x.l2_id, x.l3_name, x.l3_def].join('|')).join('\n'));
+}
+TABS.taxonomy = { init() {
+  const root = $('#tab-taxonomy');
+  root.innerHTML = '<h2>Taxonomy explorer</h2><p class="lead">Three levels: Domain, then Failure type, then Specific root cause. Click any node to see its definition and keywords.</p>' +
+    '<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)"><div class="card tree" id="tx-tree"></div><div class="card" id="tx-detail"></div></div>' +
+    '<h2 style="margin-top:26px">Schema explorer</h2><p class="lead">Normalised tables tied together by keys. Rename a name in one row and every report follows; a keyword can never point at a category that does not exist.</p>' +
+    '<div class="card"><div class="er">' + entHtml(ENT[0]) + '<div class="arrow">&larr;</div>' + entHtml(ENT[1]) + '<div class="arrow">&larr;</div>' + entHtml(ENT[2]) + '<div class="arrow">&larr;</div>' + entHtml(ENT[3]) + '<div class="arrow">&rarr;</div>' + entHtml(ENT[4]) + '</div>' +
+    '<div class="er" style="margin-top:12px">' + entHtml(ENT[5]) + '</div><p style="color:var(--muted);font-size:13px;margin:10px 0 0">Arrows point from child to parent (foreign key to primary key). <b>kw_map</b> has two nullable parents; a CHECK constraint enforces exactly one, matching <code>kw_type</code>.</p></div>' +
+    '<div class="card"><label>Data flow through the pipeline</label><div class="flow">' + ['complaints_raw', 'sentences', 'ngrams_stem', 'tf / df_idf / tfidf', 'match_map', 'kw_hits', 'class_evidence', 'complaint_class'].map((t, i, a) => '<span class="box">' + t + '</span>' + (i < a.length - 1 ? '<span>&rarr;</span>' : '')).join('') + '</div></div>' +
+    '<div class="grid2"><div class="card"><label>Design rules</label><ul style="margin:6px 0 0;padding-left:18px"><li><b>Immutable readable IDs</b> (PAY01.1). Rename the name, never the ID.</li><li><b>Retire, don\'t delete:</b> <code>active_flag</code> and <code>valid_to</code> keep history resolvable.</li><li><b>Derived columns</b> (stem, n, soundex) are computed, never typed.</li><li><b>Version the results:</b> one row per complaint per run with a taxonomy version.</li><li><b>Audit edits</b> in an append-only <code>kw_audit</code> table.</li></ul></div>' +
+    '<div class="card"><label>Keys and constraints in Base SAS (file 06)</label>' + codeBlock((() => { const c = CODE.find(x => x.file.startsWith('06')).code, a = c.indexOf('proc sql;\n  /* primary keys'), b = c.indexOf('quit;', a) + 5; return c.slice(a, b); })()) + '</div></div>';
+  const tree = DATA.tax_l1.map(l1 => '<li><span class="node" data-k="l1" data-id="' + l1.l1_id + '"><span class="lv">L1</span><b>' + esc(l1.l1_name) + '</b></span><ul>' +
+    DATA.tax_l2.filter(x => x.l1_id === l1.l1_id).map(l2 => '<li><span class="node" data-k="l2" data-id="' + l2.l2_id + '"><span class="lv">L2</span>' + esc(l2.l2_name) + '</span><ul>' +
+      DATA.tax_l3.filter(x => x.l2_id === l2.l2_id).map(l3 => '<li><span class="node" data-k="l3" data-id="' + l3.l3_id + '"><span class="lv">L3</span>' + esc(l3.l3_name) + '</span></li>').join('') + '</ul></li>').join('') + '</ul></li>').join('');
+  $('#tx-tree').innerHTML = '<ul>' + tree + '</ul>';
+  const sel = n => { $$('#tx-tree .node').forEach(x => x.classList.toggle('sel', x === n)); $('#tx-detail').innerHTML = txDetail(n.dataset.k, n.dataset.id); };
+  $('#tx-tree').addEventListener('click', e => { const n = e.target.closest('.node'); if (n) sel(n); });
+  sel($('#tx-tree .node[data-k="l3"]'));
+} };
+
+/* ---------- TOOL BUILDER ---------- */
+const BLD = { kws: [], l3s: [] };
+function bldTargets() {
+  const t = $('#bk-type').value;
+  const opts = t === 'ROOT' ? DATA.tax_l3.concat(BLD.l3s).map(x => '<option value="' + x.l3_id + '">' + x.l3_id + ' ' + esc(x.l3_name) + '</option>') : DATA.tax_trigger.map(x => '<option value="' + x.trg_id + '">' + x.trg_id + ' ' + esc(x.trg_name) + '</option>');
+  $('#bk-target').innerHTML = opts.join('');
+}
+function bldCheck() {
+  const phrase = $('#bk-phrase').value.trim(); const box = $('#bk-check');
+  if (!phrase) { box.innerHTML = ''; return null; }
+  const toks = CMP.tokens(phrase, true), stem = toks.join(' '), n = toks.length, warn = [];
+  const dropped = phrase.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean).length - toks.length;
+  if (!n) warn.push('Every word is a stopword, so this keyword can never match.');
+  if (n > 3) warn.push('More than 3 words after stopword removal. Only 1-3 word n-grams are matched, so this keyword is ignored.');
+  if (dropped > 0 && n) warn.push(dropped + ' word(s) removed as stopwords. The keyword will match as "' + stem + '" (' + n + '-gram); check it is still specific enough.');
+  const dup = CMP.KW.find(k => k.kw_stem === stem && n);
+  if (dup) warn.push('Same stem already exists (kw_id ' + dup.kw_id + ', ' + (dup.l3_id || dup.trg_id) + ').');
+  let test = '';
+  const tt = $('#bk-test').value;
+  if (n && n <= 3 && tt.trim()) {
+    const grams = CMP.ngrams(CMP.tokens(tt, true), 3).filter(g => g.n === n); let best = null;
+    grams.forEach(g => { let q = 0; if (g.ngram === stem) q = 1; else if (g.ngram.length >= 6 && Math.abs(g.ngram.length - stem.length) <= 3) { const mx = Math.max(g.ngram.length, stem.length); q = Math.min(.99, Math.max(1 - CMP.complev(g.ngram, stem) / mx, Math.max(0, 1 - CMP.spedis(g.ngram, stem) / 100)) + (CMP.soundex(g.ngram.replace(/ /g, '')) === CMP.soundex(stem.replace(/ /g, '')) ? .05 : 0)); } if (!best || q > best.q) best = { q, g: g.ngram }; });
+    test = best && best.q >= .8 ? '<div class="note good">' + (best.q === 1 ? 'Exact hit' : 'Fuzzy hit (' + best.q.toFixed(2) + ')') + ' on "<b>' + esc(best.g) + '</b>" in the test text.</div>' : '<div class="note">No hit in the test text. Closest n-gram: ' + (best ? '"' + esc(best.g) + '" (' + best.q.toFixed(2) + ')' : 'none') + '.</div>';
+  }
+  box.innerHTML = '<div style="margin:8px 0">Normalised: <span class="tok hit">' + esc(stem || '(nothing)') + '</span> <small style="color:var(--muted)">' + n + '-gram</small></div>' + warn.map(w => '<div class="note">' + esc(w) + '</div>').join('') + test;
+  return { phrase, stem, n, ok: n >= 1 && n <= 3 };
+}
+function bldNextL3(l2) { const ids = DATA.tax_l3.concat(BLD.l3s).filter(x => x.l2_id === l2).map(x => +x.l3_id.split('.')[1]); return l2 + '.' + (Math.max(0, ...ids) + 1); }
+function bldSas() {
+  let s = '/* Generated by the Complaint Root-Cause Workbench. Run after 00a-00c (and 06 if used). */\n';
+  if (BLD.l3s.length) s += '\n/* --- new Level 3 root causes --- */\ndata work.tax_l3_new;\n  length l3_id $8 l2_id $6 l3_name $50 l3_def $160 active_flag 8;\n  infile datalines dlm=\'|\' truncover;\n  input l3_id $ l2_id $ l3_name $ l3_def $;\n  active_flag = 1;\n  datalines;\n' + BLD.l3s.map(x => [x.l3_id, x.l2_id, x.l3_name, x.l3_def].join('|')).join('\n') + '\n;\nrun;\nproc append base=cmp.tax_l3 data=work.tax_l3_new; run;\n';
+  if (BLD.kws.length) s += '\n/* --- new keywords --- */\nproc sql noprint; select max(kw_id) into :maxid trimmed from cmp.kw_map; quit;\ndata work.kw_new;\n  length kw_id 8 kw_type $7 l3_id $8 trg_id $4 keyword $60 kw_weight 8 source $8;\n  infile datalines dlm=\'|\' dsd truncover;   /* DSD: || = missing */\n  input kw_type $ l3_id $ trg_id $ keyword $ kw_weight;\n  kw_id = &maxid. + _n_;  source = \'ANALYST\';\n  datalines;\n' + BLD.kws.map(k => [k.type, k.type === 'ROOT' ? k.target : '', k.type === 'TRIGGER' ? k.target : '', k.phrase, k.w].join('|')).join('\n') + '\n;\nrun;\nproc append base=cmp.kw_map data=work.kw_new; run;\n\n/* then re-run 02 (rebuilds cmp.kw_norm) and 04-05 */\n';
+  return BLD.kws.length || BLD.l3s.length ? s : '';
+}
+function bldRender() {
+  $('#bk-list').innerHTML = BLD.kws.length ? '<table><tr><th>Type</th><th>Target</th><th>Keyword</th><th class="num">Weight</th><th></th></tr>' + BLD.kws.map((k, i) => '<tr><td>' + k.type + '</td><td class="mono">' + k.target + '</td><td>' + esc(k.phrase) + '</td><td class="num">' + k.w + '</td><td><button class="btn alt" data-rm="k' + i + '">remove</button></td></tr>').join('') + '</table>' : '<p class="lead" style="margin:0">No keywords added yet.</p>';
+  $('#bl-list').innerHTML = BLD.l3s.length ? '<table><tr><th>ID</th><th>Name</th><th></th></tr>' + BLD.l3s.map((x, i) => '<tr><td class="mono">' + x.l3_id + '</td><td>' + esc(x.l3_name) + '</td><td><button class="btn alt" data-rm="l' + i + '">remove</button></td></tr>').join('') + '</table>' : '<p class="lead" style="margin:0">No new root causes added yet.</p>';
+  const s = bldSas(); $('#bk-sas').innerHTML = s ? codeBlock(s, 'Copy SAS') : '<p class="lead" style="margin:0">Add a keyword or root cause and the SAS to load it appears here.</p>';
+  bldTargets();
+}
+TABS.builder = { init() {
+  const root = $('#tab-builder');
+  root.innerHTML = '<h2>Tool builder</h2><p class="lead">Grow the taxonomy without hand-writing SAS. Test a keyword against real wording, see how the pipeline will normalise it, then copy the generated DATA step.</p>' +
+    '<div class="grid2"><div class="card"><label>1. Add a keyword</label><div class="inline-row"><div><label>Type</label><select id="bk-type"><option>ROOT</option><option>TRIGGER</option></select></div><div style="flex:2"><label>Belongs to</label><select id="bk-target"></select></div><div><label>Weight</label><select id="bk-w"><option value="1">1 - strong</option><option value="0.5">0.5 - supportive</option><option value="0.25">0.25 - weak</option></select></div></div>' +
+    '<label style="margin-top:10px">Keyword phrase</label><input type="text" id="bk-phrase" placeholder="e.g. duplicate debit"><label style="margin-top:10px">Test against wording</label><textarea id="bk-test" style="min-height:60px">They took the money out twice and the duplicate debit was never explained.</textarea><div id="bk-check"></div><button class="btn" id="bk-add" style="margin-top:6px">Add keyword</button><div style="margin-top:12px" id="bk-list"></div></div>' +
+    '<div class="card"><label>2. Add a Level 3 root cause (optional)</label><div class="inline-row"><div><label>Under L2</label><select id="bl-l2">' + DATA.tax_l2.map(x => '<option value="' + x.l2_id + '">' + x.l2_id + ' ' + esc(x.l2_name) + '</option>').join('') + '</select></div></div><label style="margin-top:10px">Name</label><input type="text" id="bl-name" placeholder="e.g. Duplicate payment taken"><label style="margin-top:10px">Definition</label><input type="text" id="bl-def" placeholder="One sentence a reviewer could apply consistently"><button class="btn" id="bl-add" style="margin-top:10px">Add root cause</button><div style="margin-top:12px" id="bl-list"></div></div></div>' +
+    '<div class="card"><label>3. Generated SAS</label><div id="bk-sas"></div></div>';
+  $('#bk-type').onchange = () => { bldTargets(); bldCheck(); };
+  $$('#bk-phrase,#bk-test').forEach(el => el.addEventListener('input', bldCheck));
+  $('#bk-add').onclick = () => { const c = bldCheck(); if (!c || !c.ok) { toast('Enter a usable keyword first'); return; } BLD.kws.push({ type: $('#bk-type').value, target: $('#bk-target').value, phrase: c.phrase, w: $('#bk-w').value }); $('#bk-phrase').value = ''; bldCheck(); bldRender(); };
+  $('#bl-add').onclick = () => { const name = $('#bl-name').value.trim(), def = $('#bl-def').value.trim(); if (!name) { toast('Give the root cause a name'); return; } const l2 = $('#bl-l2').value; BLD.l3s.push({ l3_id: bldNextL3(l2), l2_id: l2, l3_name: name, l3_def: def || name }); $('#bl-name').value = ''; $('#bl-def').value = ''; bldRender(); };
+  root.addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; const i = +b.dataset.rm.slice(1); if (b.dataset.rm[0] === 'k') BLD.kws.splice(i, 1); else BLD.l3s.splice(i, 1); bldRender(); });
+  bldRender(); bldCheck();
+} };
+
+/* ---------- CODE LIBRARY ---------- */
+TABS.code = { init() {
+  const root = $('#tab-code');
+  const own = "/* Point the pipeline at YOUR table (keep these three column names) */\nproc sql;\n  create table cmp.complaints_raw as\n  select <your_id>            as complaint_id,\n         <customer_text_col>  as description length=1000,\n         <findings_text_col>  as findings_of_investigation length=1000\n    from <yourlib.your_table>;\nquit;";
+  root.innerHTML = '<h2>SAS code library</h2><p class="lead">Drop-in Base SAS for an Enterprise Guide Program node. Files are numbered in run order; each is self-contained apart from the tables the previous steps create.</p>' +
+    '<div class="card"><label>Running it in Enterprise Guide</label><ol style="margin:6px 0 0;padding-left:20px"><li>Add a <b>Program</b> node per file (or paste several into one). Set <code>%let root</code> in 00a to a folder you can write to.</li><li>Run 00a, 00b, 00c to seed the taxonomy and sample complaints; run 01 to 05 to see the sample classified; 06 adds keys and constraints.</li><li>For real data, replace <code>cmp.complaints_raw</code> with your table using the snippet below, then re-run 01 to 05.</li><li>On a large corpus raise <code>min_df</code> (try 3) in step 03. Fuzzy matching only compares the distinct vocabulary, so it scales.</li></ol>' + codeBlock(own) + '</div>' +
+    '<div class="lessons"><div class="filelist" id="cf-list"></div><div id="cf-view"></div></div>';
+  $('#cf-list').innerHTML = CODE.map((c, i) => '<button data-i="' + i + '"><b>' + esc(c.file) + '</b><small>' + esc(c.desc) + '</small></button>').join('') + '<button class="btn" style="width:100%;text-align:center" id="cf-all">Copy everything in run order</button>';
+  const open = i => { $$('#cf-list button[data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === i)); const c = CODE[i];
+    $('#cf-view').innerHTML = '<h3 style="margin-top:0">' + esc(c.title) + '</h3><p class="lead" style="margin-bottom:0">' + esc(c.desc) + '</p>' + codeBlock(c.code, 'Copy file') + '<button class="btn alt" id="cf-dl">Download ' + esc(c.file) + '</button>';
+    $('#cf-dl').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c.code], { type: 'text/plain' })); a.download = c.file; document.body.appendChild(a); a.click(); a.remove(); }; };
+  $('#cf-list').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) open(+b.dataset.i); });
+  $('#cf-all').onclick = () => copyText(CODE.map(c => '/*#### ' + c.file + ' ####*/\n' + c.code).join('\n\n'));
+  open(0);
+} };
+
+showTab('learn');
+
+</script>
+</body>
+</html>
